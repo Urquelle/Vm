@@ -27,12 +27,13 @@ public:
     Ast_Knoten * mult_ausdruck_einlesen();
     Ast_Knoten * basis_ausdruck_einlesen();
 
+    Ast_Knoten * brauche(uint32_t art);
     Token * token();
     Token * weiter();
     Token * erwarte(uint32_t art);
+    bool    akzeptiere(uint32_t art);
     bool    gleich(uint32_t art);
     bool    ungleich(uint32_t art);
-    bool    akzeptiere(uint32_t art);
 
 private:
     std::vector<Token *> _token;

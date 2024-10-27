@@ -6,9 +6,8 @@
 
 namespace Asm {
 
-Emitter::Emitter(Vm::Laufwerk *laufwerk, std::map<std::string, uint16_t> markierungen, std::vector<Ast_Knoten *> ast)
+Emitter::Emitter(Vm::Laufwerk *laufwerk, std::vector<Ast_Knoten *> ast)
     : _laufwerk(laufwerk)
-    , _markierungen(markierungen)
     , _ast(ast)
 {
 }

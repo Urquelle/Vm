@@ -375,9 +375,11 @@ Ast_Daten::größe()
     return erg;
 }
 
-Ast_Schablone::Ast_Schablone(Token *schablone, Token *klammer_auf, std::vector<Ast_Schablone::Feld *> felder, Token *klammer_zu)
+Ast_Schablone::Ast_Schablone(Token *schablone, Ast_Knoten *name, Token *klammer_auf,
+                             std::vector<Ast_Schablone::Feld *> felder, Token *klammer_zu)
     : Ast_Knoten(AST_SCHABLONE)
     , _schablone(schablone)
+    , _name(name)
     , _klammer_auf(klammer_auf)
     , _felder(felder)
     , _klammer_zu(klammer_zu)
@@ -388,6 +390,52 @@ void
 Ast_Schablone::ausgeben(uint8_t tiefe)
 {
     //
+}
+
+std::vector<Ast_Schablone::Feld *>
+Ast_Schablone::felder()
+{
+    return _felder;
+}
+
+const char *
+Ast_Schablone::name()
+{
+    return _name->als<Ast_Name *>()->name();
+}
+
+Ast_Als::Ast_Als(Token *kleiner_als, Ast_Knoten *schablone, Token *größer_als, Ast_Knoten *basis, Ast_Knoten *feld)
+    : Ast_Knoten(AST_ALS)
+    , _kleiner_als(kleiner_als)
+    , _schablone(schablone)
+    , _größer_als(größer_als)
+    , _basis(basis)
+    , _feld(feld)
+{
+}
+
+void
+Ast_Als::ausgeben(uint8_t tiefe)
+{
+    //
+}
+
+const char *
+Ast_Als::schablone()
+{
+    return _schablone->als<Ast_Name *>()->name();
+}
+
+const char *
+Ast_Als::basis()
+{
+    return _basis->als<Ast_Name *>()->name();
+}
+
+const char *
+Ast_Als::feld()
+{
+    return _feld->als<Ast_Name *>()->name();
 }
 
 }

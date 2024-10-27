@@ -8,7 +8,6 @@ namespace Asm {
 
 Semantik::Semantik(std::vector<Ast_Knoten *> anweisungen)
     : _anweisungen(anweisungen)
-    , _adresse(0)
 {
 }
 
@@ -39,18 +38,54 @@ Semantik::markierungen_registrieren()
 
             if (anweisung->markierung())
             {
-                markierung_analysieren(anweisung->markierung(), adresse);
+                std::string markierung = anweisung->markierung()->als<Ast_Name *>()->name();
+                if (!symbol_registrieren(markierung, new Symbol_Anweisung(markierung, adresse)))
+                {
+                    assert(!"konnte symbol nicht registrieren");
+                }
             }
 
             adresse += anweisung->größe();
+        }
+
+        else if (knoten->art() == Ast_Knoten::AST_SCHABLONE)
+        {
+            assert(!"schablone registrieren");
+
+            auto *schablone = knoten->als<Ast_Schablone *>();
+
+            std::map<std::string , Symbol_Schablone::Feld *> felder;
+            uint16_t versatz = 0;
+            for (auto *feld : schablone->felder())
+            {
+                auto *f = new Symbol_Schablone::Feld(versatz, feld->größe());
+
+                if (felder.contains(feld->name()))
+                {
+                    assert(!"feld bereits vorhanden");
+                }
+
+                felder[feld->name()] = f;
+
+                versatz += feld->größe();
+            }
+
+            if (!symbol_registrieren(schablone->name(), new Symbol_Schablone(schablone->name(), felder)))
+            {
+                assert(!"konnte symbol nicht registrieren");
+            }
         }
 
         else if (knoten->art() == Ast_Knoten::AST_DATEN)
         {
             auto *daten = knoten->als<Ast_Daten *>();
             daten->adresse = adresse;
+            std::string name = daten->name()->als<Ast_Name *>()->name();
 
-            markierung_analysieren(daten->name(), adresse);
+            if (!symbol_registrieren(name, new Symbol_Daten(name, adresse)))
+            {
+                assert(!"konnte symbol nicht registrieren");
+            }
 
             adresse += daten->größe();
         }
@@ -70,7 +105,11 @@ Semantik::markierungen_registrieren()
                 wert = konstante->wert()->als<Ast_Ganzzahl *>()->wert();
             }
 
-            markierung_analysieren(konstante->name(), wert);
+            std::string name = konstante->name()->als<Ast_Name *>()->name();
+            if (!symbol_registrieren(name, new Symbol_Konstante(name, wert)))
+            {
+                assert(!"konnte symbol nicht registrieren");
+            }
         }
     }
 }
@@ -121,22 +160,30 @@ Semantik::anweisung_analysieren(Ast_Knoten *anweisung)
     }
 }
 
-void
-Semantik::markierung_analysieren(Ast_Knoten *name, uint16_t wert)
+bool
+Semantik::symbol_registrieren(std::string name, Symbol *symbol)
 {
-    if (name->ungleich(Ast_Knoten::AST_NAME))
+    if (_symbole.contains(name))
     {
-        assert(!"namen erwartet");
+        return false;
     }
 
-    auto markierung = name->als<Ast_Name *>();
+    _symbole[name] = symbol;
 
-    if (_markierungen.contains(markierung->name()))
+    return true;
+}
+
+Symbol *
+Semantik::symbol_holen(std::string name)
+{
+    auto *erg = _symbole[name];
+
+    if (erg == nullptr)
     {
-        assert(!"markierung existiert bereits");
+        assert(!"konnte symbol nicht finden");
     }
 
-    _markierungen[markierung->name()] = wert;
+    return erg;
 }
 
 void
@@ -359,32 +406,6 @@ Semantik::operand_analysieren(Ast_Knoten *op)
         assert(!"unbekannter operand");
     }
 
-#if 0
-    else if (op->art() == Ast_Knoten::AST_KONSTANTE)
-    {
-        auto konst = op->als<Ast_Konstante *>();
-
-        auto name = konst->name()->als<Ast_Name *>()->name();
-        auto wert = _markierungen[name];
-
-        return Operand::Lit(wert);
-    }
-
-    else if (op->art() == Ast_Knoten::AST_VARIABLE)
-    {
-        auto name = op->als<Ast_Variable *>()->name();
-        auto *erg = Operand::Adr(0);
-
-        if (_markierungen.contains(name))
-        {
-            auto wert = _markierungen[name];
-            erg->als<Operand_Adr *>()->setzen(wert);
-        }
-
-        return erg;
-    }
-#endif
-
     return nullptr;
 }
 
@@ -398,9 +419,25 @@ Semantik::ausdruck_auswerten(Ast_Knoten *ausdruck)
         case Ast_Knoten::AST_VARIABLE:
         {
             auto *var = ausdruck->als<Ast_Variable *>();
-            auto wert = _markierungen[var->name()];
+            auto *sym = symbol_holen(var->name());
+            assert(sym != nullptr);
 
-            erg = wert;
+            if (sym->art() == Symbol::Konstante)
+            {
+                erg = sym->als<Symbol_Konstante *>()->wert();
+            }
+            else if (sym->art() == Symbol::Daten)
+            {
+                erg = sym->als<Symbol_Daten *>()->adresse();
+            }
+            else if (sym->art() == Symbol::Anweisung)
+            {
+                erg = sym->als<Symbol_Anweisung *>()->adresse();
+            }
+            else
+            {
+                assert(!"unbekannte symbolart");
+            }
         } break;
 
         case Ast_Knoten::AST_HEX:
@@ -417,6 +454,11 @@ Semantik::ausdruck_auswerten(Ast_Knoten *ausdruck)
             auto wert = gz->wert();
 
             erg = wert;
+        } break;
+
+        case Ast_Knoten::AST_ALS:
+        {
+            //
         } break;
 
         case Ast_Knoten::AST_BIN:

@@ -12,6 +12,7 @@
 #include "asm/lexer.cpp"
 #include "asm/ast.cpp"
 #include "asm/syntax.cpp"
+#include "asm/symbol.cpp"
 #include "asm/semantik.cpp"
 #include "asm/emitter.cpp"
 
@@ -60,7 +61,7 @@ int main(int argc, char **argv)
     semantik.starten();
 
     auto speicher = new Vm::Arbeitsspeicher(256*256);
-    auto emitter = Emitter(speicher, semantik.markierungen(), ast);
+    auto emitter = Emitter(speicher, ast);
     emitter.starten();
 
     speicher->ausgeben(0, 32);

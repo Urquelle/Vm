@@ -19,7 +19,7 @@
     X(AST_KLAMMER) \
     X(AST_DATEN) \
     X(AST_SCHABLONE) \
-    X(AST_FELD)
+    X(AST_ALS)
 
 namespace Asm {
 
@@ -256,33 +256,46 @@ public:
     class Feld
     {
     public:
-        Feld(Ast_Knoten *name, Ast_Knoten *wert) : _name(name), _wert(wert) {}
+        Feld(Ast_Knoten *name, Ast_Knoten *größe) : _name(name), _größe(größe) {}
 
-        const char *name();
-        uint16_t wert();
+        const char *name() { return _name->als<Ast_Name *>()->name(); }
+        uint16_t größe() { return _größe->als<Ast_Hex *>()->wert(); }
 
     private:
         Ast_Knoten *_name;
-        Ast_Knoten *_wert;
+        Ast_Knoten *_größe;
     };
 
-    Ast_Schablone(Token *schablone, Token *klammer_auf, std::vector<Feld *> felder, Token *klammer_zu);
+    Ast_Schablone(Token *schablone, Ast_Knoten *name, Token *klammer_auf, std::vector<Feld *> felder, Token *klammer_zu);
 
     void ausgeben(uint8_t tiefe) override;
     std::vector<Feld *> felder();
+    const char *name();
 
 private:
     Token *_schablone;
+    Ast_Knoten *_name;
     Token *_klammer_auf;
     std::vector<Feld *> _felder;
     Token *_klammer_zu;
 };
 
-class Ast_Feld : public Ast_Knoten
+class Ast_Als : public Ast_Knoten
 {
 public:
-    Ast_Feld();
+    Ast_Als(Token *kleiner_als, Ast_Knoten *schablone, Token *größer_als, Ast_Knoten *basis, Ast_Knoten *feld);
     void ausgeben(uint8_t tiefe) override;
+
+    const char *schablone();
+    const char *basis();
+    const char *feld();
+
+private:
+    Token *_kleiner_als;
+    Token *_größer_als;
+    Ast_Knoten *_schablone;
+    Ast_Knoten *_basis;
+    Ast_Knoten *_feld;
 };
 
 }

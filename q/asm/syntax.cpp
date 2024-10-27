@@ -187,6 +187,18 @@ Syntax::basis_ausdruck_einlesen()
             return new Ast_Variable(ausrufezeichen, basis);
         } break;
 
+        case Token::T_KLEINER:
+        {
+            auto *kleiner_als = weiter();
+            auto *schablone = brauche(Ast_Knoten::AST_NAME);
+            auto *größer_als = erwarte(Token::T_GROESSER);
+            auto *name = brauche(Ast_Knoten::AST_NAME);
+            erwarte(Token::T_PUNKT);
+            auto *feld = brauche(Ast_Knoten::AST_NAME);
+
+            return new Ast_Als(kleiner_als, schablone, größer_als, name, feld);
+        } break;
+
         case Token::T_ECKIGE_KLAMMER_AUF:
         {
             auto klammer_auf = weiter();
@@ -273,9 +285,7 @@ Syntax::schablone_dekl_einlesen(bool exportieren)
     Ast_Knoten *erg = nullptr;
 
     auto *schablone = weiter();
-    auto *name = basis_ausdruck_einlesen();
-    assert(name->art() == Ast_Knoten::AST_NAME);
-
+    auto *name = brauche(Ast_Knoten::AST_NAME);
     auto *klammer_auf = erwarte(Token::T_GESCHWEIFTE_KLAMMER_AUF);
 
     std::vector<Ast_Schablone::Feld *> felder;
@@ -285,17 +295,14 @@ Syntax::schablone_dekl_einlesen(bool exportieren)
         assert(feldname->art() == Ast_Knoten::AST_NAME);
 
         erwarte(Token::T_DOPPELPUNKT);
-        auto *wert = basis_ausdruck_einlesen();
-        assert(wert->art() == Ast_Knoten::AST_HEX);
-
+        auto *wert = brauche(Ast_Knoten::AST_HEX);
         felder.push_back(new Ast_Schablone::Feld(feldname, wert));
-
         akzeptiere(Token::T_KOMMA);
     }
 
     auto *klammer_zu = erwarte(Token::T_GESCHWEIFTE_KLAMMER_ZU);
 
-    erg = new Ast_Schablone(schablone, klammer_auf, felder, klammer_zu);
+    erg = new Ast_Schablone(schablone, name, klammer_auf, felder, klammer_zu);
 
     return erg;
 }
@@ -344,6 +351,18 @@ Syntax::daten_dekl_einlesen(uint32_t z_daten, bool exportieren)
 }
 
 /* helfer {{{ */
+
+Ast_Knoten *
+Syntax::brauche(uint32_t art)
+{
+    auto *ausdruck = ausdruck_einlesen();
+    if (ausdruck && ausdruck->art() == (int32_t) art)
+    {
+        return ausdruck;
+    }
+
+    return nullptr;
+}
 
 Token *
 Syntax::token()
