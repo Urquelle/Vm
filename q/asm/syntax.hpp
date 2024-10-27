@@ -18,6 +18,7 @@ public:
 
     Ast_Knoten * anweisung_einlesen();
     Ast_Knoten * daten_dekl_einlesen(uint32_t z_daten, bool exportieren);
+    Ast_Knoten * schablone_dekl_einlesen(bool exportieren);
 
     Ast_Knoten * zeile_analysieren();
     Ast_Knoten * ausdruck_einlesen();

@@ -25,13 +25,12 @@ public:
 
     void markierung_analysieren(Ast_Knoten *name, uint16_t wert);
     Vm::Operand * operand_analysieren(Ast_Knoten *op);
-    Vm::Operand * operand_ausdruck_analysieren(Ast_Knoten *ausdruck);
+    uint16_t ausdruck_auswerten(Ast_Knoten *ausdruck);
 
     const std::map<std::string, uint16_t> markierungen() { return _markierungen; }
 
 private:
     std::map<std::string, uint16_t> _markierungen;
-    std::map<std::string, std::vector<Vm::Operand *>> _abhängigkeiten;
     std::vector<Ast_Knoten *> _anweisungen;
 
     uint16_t _adresse;

@@ -27,7 +27,7 @@ int main (int argc, char **argv)
         .laufwerk = anzeige,
         .anfang = 0x3000,
         .ende = 0x30ff,
-        .umschreiben = true
+        .zuordnen = true
     });
 
     auto cpu = new Cpu(vermittler);

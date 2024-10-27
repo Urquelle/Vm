@@ -169,6 +169,11 @@ Lexer::starten()
             weiter();
             erg.push_back(Token::Klammeraffe(anfang));
         }
+        else if (z == '#')
+        {
+            weiter();
+            erg.push_back(Token::Raute(anfang));
+        }
         else if (z == ':')
         {
             weiter();

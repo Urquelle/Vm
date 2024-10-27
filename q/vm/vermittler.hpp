@@ -16,7 +16,7 @@ public:
         Laufwerk *laufwerk;
         uint16_t anfang;
         uint16_t ende;
-        bool umschreiben;
+        bool     zuordnen;
     };
 
     Vermittler();

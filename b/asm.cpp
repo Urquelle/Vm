@@ -23,9 +23,9 @@ int main(int argc, char **argv)
 {
     using namespace Asm;
 
-    if (argc < 2)
+    if (argc < 3)
     {
-        std::cerr << "dateiname muss übergeben werden" << std::endl;
+        std::cerr << "dateiname und startadresse müssen übergeben werden" << std::endl;
         exit(1);
     }
 
@@ -67,7 +67,8 @@ int main(int argc, char **argv)
 
     auto cpu = Vm::Cpu(speicher);
 
-    cpu.ausführen();
+    uint16_t adresse = atoi(argv[2]);
+    cpu.ausführen(adresse);
     cpu.ausgeben();
 
     return 0;

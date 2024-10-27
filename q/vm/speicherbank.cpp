@@ -2,12 +2,14 @@
 
 namespace Vm {
 
-Speicherbank::Speicherbank(Cpu *cpu, size_t z_laufwerke, size_t gr_laufwerk)
+Speicherbank::Speicherbank(Cpu *cpu, size_t anzahl, size_t größe)
     : _cpu(cpu)
+    , _anzahl(anzahl)
+    , _größe(größe)
 {
-    for (uint32_t laufwerk_idx = 0; laufwerk_idx < z_laufwerke; ++laufwerk_idx)
+    for (uint32_t laufwerk_idx = 0; laufwerk_idx < _anzahl; ++laufwerk_idx)
     {
-        _laufwerke.push_back(new Arbeitsspeicher(gr_laufwerk));
+        _laufwerke.push_back(new Arbeitsspeicher(_größe));
     }
 }
 
@@ -39,7 +41,7 @@ Speicherbank::ausgeben(uint16_t adresse, uint16_t anzahl_bytes)
 Laufwerk *
 Speicherbank::laufwerk_holen()
 {
-    auto bank_id = _cpu->regs[REG_MB];
+    auto bank_id = _cpu->regs[REG_MB] % _anzahl;
     auto laufwerk = _laufwerke[bank_id];
 
     return laufwerk;

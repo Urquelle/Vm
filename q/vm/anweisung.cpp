@@ -1212,9 +1212,9 @@ Anweisung_Int::starten(Cpu *cpu)
 {
     auto wert = _op->als<Operand_Lit *>()->wert();
     auto interrupt_vektor_index = wert % 0xf;
-    auto ist_nicht_maskiert = (bool)((1 << interrupt_vektor_index) & cpu->regs[REG_IM]);
+    auto ist_maskiert = (bool) !((1 << interrupt_vektor_index) & cpu->regs[REG_IM]);
 
-    if (!ist_nicht_maskiert)
+    if (ist_maskiert)
     {
         return;
     }
@@ -1227,6 +1227,11 @@ Anweisung_Int::starten(Cpu *cpu)
         // INFO: 0 ist die anzahl der argumente, die auf dem stack landen muss bevor stand_speichern
         cpu->push(0);
         cpu->stand_speichern();
+    }
+
+    if (interrupt_steuerung_adresse.schlecht())
+    {
+        assert(!"konnte wert nicht lesen");
     }
 
     cpu->in_interrupt_steuerung = true;

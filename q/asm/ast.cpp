@@ -375,6 +375,21 @@ Ast_Daten::größe()
     return erg;
 }
 
+Ast_Schablone::Ast_Schablone(Token *schablone, Token *klammer_auf, std::vector<Ast_Schablone::Feld *> felder, Token *klammer_zu)
+    : Ast_Knoten(AST_SCHABLONE)
+    , _schablone(schablone)
+    , _klammer_auf(klammer_auf)
+    , _felder(felder)
+    , _klammer_zu(klammer_zu)
+{
+}
+
+void
+Ast_Schablone::ausgeben(uint8_t tiefe)
+{
+    //
+}
+
 }
 
 uint32_t

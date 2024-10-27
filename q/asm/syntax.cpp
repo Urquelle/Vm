@@ -36,13 +36,13 @@ Syntax::zeile_analysieren()
 
     if (strcmp(token()->text(), "data8") == 0)
     {
-        auto dekl = daten_dekl_einlesen(8, exportieren);
+        auto dekl = daten_dekl_einlesen(1, exportieren);
 
         return dekl;
     }
     else if (strcmp(token()->text(), "data16") == 0)
     {
-        auto dekl = daten_dekl_einlesen(16, exportieren);
+        auto dekl = daten_dekl_einlesen(2, exportieren);
 
         return dekl;
     }
@@ -68,6 +68,12 @@ Syntax::zeile_analysieren()
         dekl->exportieren = exportieren;
 
         return dekl;
+    }
+    else if (strcmp(token()->text(), "schablone") == 0)
+    {
+        auto *erg = schablone_dekl_einlesen(exportieren);
+
+        return erg;
     }
     else
     {
@@ -259,6 +265,39 @@ Syntax::basis_ausdruck_einlesen()
     }
 
     return nullptr;
+}
+
+Ast_Knoten *
+Syntax::schablone_dekl_einlesen(bool exportieren)
+{
+    Ast_Knoten *erg = nullptr;
+
+    auto *schablone = weiter();
+    auto *name = basis_ausdruck_einlesen();
+    assert(name->art() == Ast_Knoten::AST_NAME);
+
+    auto *klammer_auf = erwarte(Token::T_GESCHWEIFTE_KLAMMER_AUF);
+
+    std::vector<Ast_Schablone::Feld *> felder;
+    while (ungleich(Token::T_GESCHWEIFTE_KLAMMER_ZU))
+    {
+        auto *feldname = basis_ausdruck_einlesen();
+        assert(feldname->art() == Ast_Knoten::AST_NAME);
+
+        erwarte(Token::T_DOPPELPUNKT);
+        auto *wert = basis_ausdruck_einlesen();
+        assert(wert->art() == Ast_Knoten::AST_HEX);
+
+        felder.push_back(new Ast_Schablone::Feld(feldname, wert));
+
+        akzeptiere(Token::T_KOMMA);
+    }
+
+    auto *klammer_zu = erwarte(Token::T_GESCHWEIFTE_KLAMMER_ZU);
+
+    erg = new Ast_Schablone(schablone, klammer_auf, felder, klammer_zu);
+
+    return erg;
 }
 
 Ast_Knoten *

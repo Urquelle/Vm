@@ -12,7 +12,7 @@ namespace Vm {
 class Speicherbank : public Laufwerk
 {
 public:
-    Speicherbank(Cpu *cpu, size_t z_laufwerke, size_t gr_laufwerk);
+    Speicherbank(Cpu *cpu, size_t anzahl, size_t größe);
 
     Ergebnis<uint8_t> lesen_1byte(uint16_t adresse);
     bool schreiben_1byte(uint16_t adresse, uint8_t wert);
@@ -23,6 +23,8 @@ protected:
 
 private:
     Cpu *_cpu;
+    size_t _anzahl;
+    size_t _größe;
     std::vector<Laufwerk *> _laufwerke;
 };
 

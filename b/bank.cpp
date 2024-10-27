@@ -15,23 +15,23 @@ int main (int argc, char **argv)
     auto vermittler = new Vermittler();
     auto cpu = new Cpu(vermittler);
 
-    size_t z_laufwerke = 8;
-    size_t gr_laufwerk = 0xff;
+    size_t anzahl = 8;
+    size_t größe   = 0xff;
 
-    auto speicherbank = new Speicherbank(cpu, z_laufwerke, gr_laufwerk);
+    auto speicherbank = new Speicherbank(cpu, anzahl, größe);
     auto speicher = new Arbeitsspeicher(0xff00);
 
     vermittler->zuordnen({
         .laufwerk = speicherbank,
         .anfang = 0x0,
-        .ende = (uint16_t)gr_laufwerk
+        .ende = (uint16_t) größe
     });
 
     vermittler->zuordnen({
         .laufwerk = speicher,
-        .anfang = (uint16_t)gr_laufwerk,
+        .anfang = (uint16_t) größe,
         .ende = 0xffff,
-        .umschreiben = true
+        .zuordnen = true
     });
 
     vermittler->schreiben_2byte(0, 1);

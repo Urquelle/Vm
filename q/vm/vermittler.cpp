@@ -30,7 +30,7 @@ Vermittler::lesen_2byte(uint16_t adresse)
         return region.fehler();
     }
 
-    uint16_t adr = region.wert().umschreiben
+    uint16_t adr = region.wert().zuordnen
         ? adresse - region.wert().anfang
         : adresse;
 
@@ -47,7 +47,7 @@ Vermittler::lesen_1byte(uint16_t adresse)
         return region.fehler();
     }
 
-    uint16_t adr = region.wert().umschreiben
+    uint16_t adr = region.wert().zuordnen
         ? adresse - region.wert().anfang
         : adresse;
 
@@ -64,7 +64,7 @@ Vermittler::schreiben_2byte(uint16_t adresse, uint16_t wert)
         return false;
     }
 
-    uint16_t adr = region.wert().umschreiben
+    uint16_t adr = region.wert().zuordnen
         ? adresse - region.wert().anfang
         : adresse;
 
@@ -81,7 +81,7 @@ Vermittler::schreiben_1byte(uint16_t adresse, uint8_t wert)
         return false;
     }
 
-    uint16_t adr = region.wert().umschreiben
+    uint16_t adr = region.wert().zuordnen
         ? adresse - region.wert().anfang
         : adresse;
 
@@ -98,7 +98,7 @@ Vermittler::ausgeben(uint16_t adresse, uint16_t anzahl_bytes)
         return;
     }
 
-    uint16_t adr = region.wert().umschreiben
+    uint16_t adr = region.wert().zuordnen
         ? adresse - region.wert().anfang
         : adresse;
 

@@ -40,6 +40,29 @@ Emitter::knoten_emittieren(Ast_Knoten *knoten)
             anweisung->kodieren(_laufwerk);
         } break;
 
+        case Ast_Knoten::AST_DATEN:
+        {
+            auto *ast = knoten->als<Ast_Daten *>();
+            uint16_t adresse = ast->adresse;
+
+            for (auto *d : ast->daten())
+            {
+                assert(d->art() == Ast_Knoten::AST_HEX);
+                auto *daten = d->als<Ast_Hex *>();
+
+                if (ast->z_daten() == 1)
+                {
+                    _laufwerk->schreiben_1byte(adresse, daten->wert());
+                    adresse += 1;
+                }
+                else
+                {
+                    _laufwerk->schreiben_2byte(adresse, daten->wert());
+                    adresse += 2;
+                }
+            }
+        } break;
+
         default:
         {
             int x = 0;

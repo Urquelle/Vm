@@ -59,7 +59,18 @@ Semantik::markierungen_registrieren()
         {
             auto *konstante = knoten->als<Ast_Konstante *>();
 
-            markierung_analysieren(konstante->name(), adresse);
+            uint16_t wert = 0;
+            if (konstante->wert()->art() == Ast_Knoten::AST_HEX)
+            {
+                wert = konstante->wert()->als<Ast_Hex *>()->wert();
+            }
+            else
+            {
+                assert(konstante->wert()->art() == Ast_Knoten::AST_GANZZAHL);
+                wert = konstante->wert()->als<Ast_Ganzzahl *>()->wert();
+            }
+
+            markierung_analysieren(konstante->name(), wert);
         }
     }
 }
@@ -108,41 +119,6 @@ Semantik::anweisung_analysieren(Ast_Knoten *anweisung)
             assert(!"unbekannte anweisung");
         }
     }
-    else if (anweisung->gleich(Ast_Knoten::AST_DATEN))
-    {
-#if 0
-        auto *daten = anweisung->als<Ast_Daten *>();
-        daten->adresse = _adresse;
-
-        markierung_analysieren(daten->name(), _adresse);
-
-        auto z_daten = daten->z_daten();
-        auto anz_daten = daten->anz_daten();
-
-        _adresse += (z_daten * anz_daten);
-#endif
-    }
-    else if (anweisung->gleich(Ast_Knoten::AST_KONSTANTE))
-    {
-#if 0
-        auto konst = anweisung->als<Ast_Konstante *>();
-
-        assert(konst->wert()->gleich(Ast_Knoten::AST_HEX) || konst->wert()->gleich(Ast_Knoten::AST_GANZZAHL));
-        auto knoten = konst->wert();
-        uint16_t wert = 0;
-
-        if (knoten->gleich(Ast_Knoten::AST_HEX))
-        {
-            wert = knoten->als<Ast_Hex *>()->wert();
-        }
-        else if (knoten->gleich(Ast_Knoten::AST_GANZZAHL))
-        {
-            wert = knoten->als<Ast_Ganzzahl *>()->wert();
-        }
-
-        markierung_analysieren(konst->name(), wert);
-#endif
-    }
 }
 
 void
@@ -161,11 +137,6 @@ Semantik::markierung_analysieren(Ast_Knoten *name, uint16_t wert)
     }
 
     _markierungen[markierung->name()] = wert;
-
-    for (auto *op : _abhängigkeiten[markierung->name()])
-    {
-        op->als<Vm::Operand_Adr *>()->setzen(wert);
-    }
 }
 
 void
@@ -345,15 +316,7 @@ Semantik::operand_analysieren(Ast_Knoten *op)
 
     else if (op->art() == Ast_Knoten::AST_GANZZAHL)
     {
-        return Operand::Reg(op->als<Ast_Ganzzahl *>()->wert());
-    }
-
-    else if (op->art() == Ast_Knoten::AST_KONSTANTE)
-    {
-        auto konst = op->als<Ast_Konstante *>();
-
-        auto name = konst->name()->als<Ast_Name *>()->name();
-        auto wert = _markierungen[name];
+        auto wert = op->als<Ast_Ganzzahl *>()->wert();
 
         return Operand::Lit(wert);
     }
@@ -367,32 +330,15 @@ Semantik::operand_analysieren(Ast_Knoten *op)
 
     else if (op->art() == Ast_Knoten::AST_ECKIGE_KLAMMER)
     {
-        auto *erg = operand_ausdruck_analysieren(op->als<Ast_Eckige_Klammer *>()->ausdruck());
-    }
+        uint16_t wert = ausdruck_auswerten(op->als<Ast_Eckige_Klammer *>()->ausdruck());
 
-    else if (op->art() == Ast_Knoten::AST_VARIABLE)
-    {
-        auto name = op->als<Ast_Variable *>()->name();
-        auto *erg = Operand::Adr(0);
-
-        if (_markierungen.contains(name))
-        {
-            auto wert = _markierungen[name];
-            erg->als<Operand_Adr *>()->setzen(wert);
-        }
-        else
-        {
-            // AUFGABE: abhängigkeit eintragen
-            _abhängigkeiten[name].push_back(erg);
-        }
-
-        return erg;
+        return Operand::Lit(wert);
     }
 
     else if (op->art() == Ast_Knoten::AST_ADRESSE)
     {
         auto adr = op->als<Ast_Adresse *>();
-        auto aus = operand_ausdruck_analysieren(adr->ausdruck());
+        auto aus = operand_analysieren(adr->ausdruck());
 
         if (aus->art() == Operand::OPND_REG)
         {
@@ -408,68 +354,121 @@ Semantik::operand_analysieren(Ast_Knoten *op)
         }
     }
 
+    else
+    {
+        assert(!"unbekannter operand");
+    }
+
+#if 0
+    else if (op->art() == Ast_Knoten::AST_KONSTANTE)
+    {
+        auto konst = op->als<Ast_Konstante *>();
+
+        auto name = konst->name()->als<Ast_Name *>()->name();
+        auto wert = _markierungen[name];
+
+        return Operand::Lit(wert);
+    }
+
+    else if (op->art() == Ast_Knoten::AST_VARIABLE)
+    {
+        auto name = op->als<Ast_Variable *>()->name();
+        auto *erg = Operand::Adr(0);
+
+        if (_markierungen.contains(name))
+        {
+            auto wert = _markierungen[name];
+            erg->als<Operand_Adr *>()->setzen(wert);
+        }
+
+        return erg;
+    }
+#endif
+
     return nullptr;
 }
 
-Vm::Operand *
-Semantik::operand_ausdruck_analysieren(Ast_Knoten *ausdruck)
+uint16_t
+Semantik::ausdruck_auswerten(Ast_Knoten *ausdruck)
 {
-    assert(ausdruck);
+    uint16_t erg = 0;
 
     switch (ausdruck->art())
     {
-        case Ast_Knoten::AST_REG:
+        case Ast_Knoten::AST_VARIABLE:
         {
-            return operand_analysieren(ausdruck);
-        } break;
+            auto *var = ausdruck->als<Ast_Variable *>();
+            auto wert = _markierungen[var->name()];
 
-        case Ast_Knoten::AST_GANZZAHL:
-        {
-            return Vm::Operand::Lit(ausdruck->als<Ast_Ganzzahl *>()->wert());
+            erg = wert;
         } break;
 
         case Ast_Knoten::AST_HEX:
         {
-            return Vm::Operand::Lit(ausdruck->als<Ast_Hex *>()->wert());
+            auto *hex = ausdruck->als<Ast_Hex *>();
+            auto wert = hex->wert();
+
+            erg = wert;
         } break;
 
-        case Ast_Knoten::AST_VARIABLE:
+        case Ast_Knoten::AST_GANZZAHL:
         {
-            auto *variable = ausdruck->als<Ast_Variable *>();
+            auto *gz = ausdruck->als<Ast_Ganzzahl *>();
+            auto wert = gz->wert();
 
-            if (!_markierungen.contains(variable->name()))
-            {
-                assert(!"variable existiert nicht");
-            }
-
-            auto wert = _markierungen[variable->name()];
-
-            return Vm::Operand::Lit(wert);
+            erg = wert;
         } break;
 
         case Ast_Knoten::AST_BIN:
         {
-            auto *op_links  = operand_ausdruck_analysieren(ausdruck->als<Ast_Bin *>()->links());
-            auto *op_rechts = operand_ausdruck_analysieren(ausdruck->als<Ast_Bin *>()->rechts());
+            auto *bin = ausdruck->als<Ast_Bin *>();
 
-            auto wert = 0;
+            auto wert_links  = ausdruck_auswerten(bin->links());
+            auto wert_rechts = ausdruck_auswerten(bin->rechts());
 
-            return Vm::Operand::Lit(wert);
+            switch (bin->op()->art())
+            {
+                case Token::T_PLUS:
+                {
+                    erg = wert_links + wert_rechts;
+                } break;
+
+                case Token::T_MINUS:
+                {
+                    erg = wert_links - wert_rechts;
+                } break;
+
+                case Token::T_STERN:
+                {
+                    erg = wert_links * wert_rechts;
+                } break;
+
+                case Token::T_PISA:
+                {
+                    assert(wert_rechts != 0);
+                    erg = wert_links / wert_rechts;
+                } break;
+
+                default:
+                {
+                    assert(!"unbekannter operator.");
+                } break;
+            }
         } break;
 
-        case Ast_Knoten::AST_ECKIGE_KLAMMER:
+        case Ast_Knoten::AST_KLAMMER:
         {
-            auto innere_ausdruck = ausdruck->als<Ast_Eckige_Klammer *>()->ausdruck();
-
-            return operand_ausdruck_analysieren(innere_ausdruck);
+            auto *klammer = ausdruck->als<Ast_Klammer *>();
+            erg = ausdruck_auswerten(klammer->ausdruck());
         } break;
 
         default:
         {
-            assert(!"unbekannter ausdruck.");
-            return nullptr;
+            assert(!"unzulässiger ausdruck");
         } break;
     }
+
+    return erg;
 }
 
 }
