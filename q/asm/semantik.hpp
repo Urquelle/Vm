@@ -27,6 +27,7 @@ public:
     void jne_analysieren(Asm::Anweisung *anweisung);
     void hlt_analysieren(Asm::Anweisung *anweisung);
     void rti_analysieren(Asm::Anweisung *anweisung);
+    void brk_analysieren(Asm::Anweisung *anweisung);
 
     Vm::Operand * operand_analysieren(Ausdruck *op);
     uint16_t ausdruck_auswerten(Ausdruck *ausdruck);

@@ -135,6 +135,10 @@ Semantik::anweisung_analysieren(Asm::Anweisung *anweisung)
     {
         rti_analysieren(anweisung);
     }
+    else if (anweisung->op() == "brk" || anweisung->op() == "BRK")
+    {
+        brk_analysieren(anweisung);
+    }
     else
     {
         assert(!"unbekannte anweisung");
@@ -332,6 +336,14 @@ Semantik::rti_analysieren(Asm::Anweisung *anweisung)
     using namespace Vm;
 
     anweisung->anweisung_setzen(Vm::Anweisung::Rti());
+}
+
+void
+Semantik::brk_analysieren(Asm::Anweisung *anweisung)
+{
+    using namespace Vm;
+
+    anweisung->anweisung_setzen(Vm::Anweisung::Brk());
 }
 
 Vm::Operand *
