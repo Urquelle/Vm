@@ -35,6 +35,14 @@ Anweisung::Nop()
 }
 
 Anweisung *
+Anweisung::Brk()
+{
+    auto erg = new Anweisung_Brk();
+
+    return erg;
+}
+
+Anweisung *
 Anweisung::Push(Operand *wert)
 {
     auto erg = new Anweisung_Push(wert);
@@ -179,9 +187,9 @@ Anweisung::Int(Operand *operand)
 }
 
 Anweisung *
-Anweisung::RInt()
+Anweisung::Rti()
 {
-    auto erg = new Anweisung_RInt();
+    auto erg = new Anweisung_Rti();
 
     return erg;
 }
@@ -613,6 +621,11 @@ Anweisung::Dekodieren(Cpu *cpu, uint8_t opcode)
             return Anweisung::Hlt();
         } break;
 
+        case OP_BRK:
+        {
+            return Anweisung::Brk();
+        } break;
+
         case OP_INT:
         {
             uint16_t wert = cpu->lesen2();
@@ -620,9 +633,9 @@ Anweisung::Dekodieren(Cpu *cpu, uint8_t opcode)
             return Anweisung::Int(Operand::Lit(wert));
         } break;
 
-        case OP_RET_INT:
+        case OP_RTI:
         {
-            return Anweisung::RInt();
+            return Anweisung::Rti();
         } break;
 
         default:
@@ -638,162 +651,196 @@ Anweisung::Dekodieren(Cpu *cpu, uint8_t opcode)
 // konstruktoren {{{
 
 Anweisung_Hlt::Anweisung_Hlt()
+    : Anweisung(Anweisung::HLT)
 {
 }
 
 Anweisung_Nop::Anweisung_Nop()
+    : Anweisung(Anweisung::NOP)
+{
+}
+
+Anweisung_Brk::Anweisung_Brk()
+    : Anweisung(Anweisung::BRK)
 {
 }
 
 Anweisung_Push::Anweisung_Push(Operand *op)
-    : _op(op)
+    : Anweisung(Anweisung::PSH)
+    , _op(op)
 {
 }
 
 Anweisung_Pop::Anweisung_Pop(Operand *op)
-    : _op(op)
+    : Anweisung(Anweisung::POP)
+    , _op(op)
 {
 }
 
 Anweisung_Add::Anweisung_Add(Operand *quelle1, Operand *quelle2)
-    : _quelle1(quelle1)
+    : Anweisung(Anweisung::ADD)
+    , _quelle1(quelle1)
     , _quelle2(quelle2)
 {
 }
 
 Anweisung_Sub::Anweisung_Sub(Operand *quelle1, Operand *quelle2)
-    : _quelle1(quelle1)
+    : Anweisung(Anweisung::SUB)
+    , _quelle1(quelle1)
     , _quelle2(quelle2)
 {
 }
 
 Anweisung_Mul::Anweisung_Mul(Operand *quelle1, Operand *quelle2)
-    : _quelle1(quelle1)
+    : Anweisung(Anweisung::MUL)
+    , _quelle1(quelle1)
     , _quelle2(quelle2)
 {
 }
 
 Anweisung_Lsf::Anweisung_Lsf(Operand *op1, Operand *op2)
-    : _op1(op1)
+    : Anweisung(Anweisung::LSF)
+    , _op1(op1)
     , _op2(op2)
 {
 }
 
 Anweisung_Rsf::Anweisung_Rsf(Operand *op1, Operand *op2)
-    : _op1(op1)
+    : Anweisung(Anweisung::RSF)
+    , _op1(op1)
     , _op2(op2)
 {
 }
 
 Anweisung_And::Anweisung_And(Operand *op1, Operand *op2)
-    : _op1(op1)
+    : Anweisung(Anweisung::AND)
+    , _op1(op1)
     , _op2(op2)
 {
 }
 
 Anweisung_Or::Anweisung_Or(Operand *op1, Operand *op2)
-    : _op1(op1)
+    : Anweisung(Anweisung::OR)
+    , _op1(op1)
     , _op2(op2)
 {
 }
 
 Anweisung_Xor::Anweisung_Xor(Operand *op1, Operand *op2)
-    : _op1(op1)
+    : Anweisung(Anweisung::XOR)
+    , _op1(op1)
     , _op2(op2)
 {
 }
 
 Anweisung_Not::Anweisung_Not(Operand *op)
-    : _op(op)
+    : Anweisung(Anweisung::NOT)
+    , _op(op)
 {
 }
 
 Anweisung_Mov::Anweisung_Mov(Operand *ziel, Operand *quelle)
-    : _ziel(ziel)
+    : Anweisung(Anweisung::MOV)
+    , _ziel(ziel)
     , _quelle(quelle)
     , _versatz(nullptr)
 {
 }
 
 Anweisung_Mov::Anweisung_Mov(Operand *ziel, Operand *basis, Operand *versatz)
-    : _ziel(ziel)
+    : Anweisung(Anweisung::MOV)
+    , _ziel(ziel)
     , _basis(basis)
     , _versatz(versatz)
 {
 }
 
 Anweisung_Cal::Anweisung_Cal(Operand *op)
-    : _op(op)
+    : Anweisung(Anweisung::CAL)
+    , _op(op)
 {
 }
 
 Anweisung_Ret::Anweisung_Ret()
+    : Anweisung(Anweisung::RET)
 {
 }
 
 Anweisung_Inc::Anweisung_Inc(Operand *op)
-    : _op(op)
+    : Anweisung(Anweisung::INC)
+    , _op(op)
 {
 }
 
 Anweisung_Dec::Anweisung_Dec(Operand *op)
-    : _op(op)
+    : Anweisung(Anweisung::DEC)
+    , _op(op)
 {
 }
 
 Anweisung_Int::Anweisung_Int(Operand *op)
-    : _op(op)
+    : Anweisung(Anweisung::INT)
+    , _op(op)
 {
 }
 
-Anweisung_RInt::Anweisung_RInt()
+Anweisung_Rti::Anweisung_Rti()
+    : Anweisung(Anweisung::RTI)
 {
 }
 
 Anweisung_Ldi::Anweisung_Ldi(Operand *ziel, Operand *versatz)
-    : _ziel(ziel)
+    : Anweisung(Anweisung::LDI)
+    , _ziel(ziel)
     , _versatz(versatz)
 {
 }
 
 Anweisung_Lea::Anweisung_Lea(Operand *ziel, Operand *versatz)
-    : _ziel(ziel)
+    : Anweisung(Anweisung::LEA)
+    , _ziel(ziel)
     , _versatz(versatz)
 {
 }
 
 Anweisung_Jne::Anweisung_Jne(Operand *op, Operand *adresse)
-    : _op(op)
+    : Anweisung(Anweisung::JNE)
+    , _op(op)
     , _adr(adresse)
 {
 }
 
 Anweisung_Jeq::Anweisung_Jeq(Operand *op, Operand *adresse)
-    : _op(op)
+    : Anweisung(Anweisung::JEQ)
+    , _op(op)
     , _adr(adresse)
 {
 }
 
 Anweisung_Jlt::Anweisung_Jlt(Operand *op, Operand *adresse)
-    : _op(op)
+    : Anweisung(Anweisung::JLT)
+    , _op(op)
     , _adr(adresse)
 {
 }
 
 Anweisung_Jgt::Anweisung_Jgt(Operand *op, Operand *adresse)
-    : _op(op)
+    : Anweisung(Anweisung::JGT)
+    , _op(op)
     , _adr(adresse)
 {
 }
 
 Anweisung_Jle::Anweisung_Jle(Operand *op, Operand *adresse)
-    : _op(op)
+    : Anweisung(Anweisung::JLE)
+    , _op(op)
     , _adr(adresse)
 {
 }
 
 Anweisung_Jge::Anweisung_Jge(Operand *op, Operand *adresse)
-    : _op(op)
+    : Anweisung(Anweisung::JGE)
+    , _op(op)
     , _adr(adresse)
 {
 }
@@ -811,18 +858,18 @@ Anweisung_Add::starten(Cpu *cpu)
             auto q1 = _quelle1->als<Operand_Reg *>()->wert();
             auto q2 = _quelle2->als<Operand_Reg *>()->wert();
 
-            cpu->regs[REG_ACC] = cpu->regs[q1] + cpu->regs[q2];
+            cpu->regs[REG_ACU] = cpu->regs[q1] + cpu->regs[q2];
         }
         else if (_quelle2->art() == Operand::OPND_LIT)
         {
             auto q1 = _quelle1->als<Operand_Reg *>()->wert();
             auto q2 = _quelle2->als<Operand_Lit *>()->wert();
 
-            cpu->regs[REG_ACC] = cpu->regs[q1] + q2;
+            cpu->regs[REG_ACU] = cpu->regs[q1] + q2;
         }
     }
 
-    flags_setzen(cpu, REG_ACC);
+    flags_setzen(cpu, REG_ACU);
 }
 
 void
@@ -835,14 +882,14 @@ Anweisung_Sub::starten(Cpu *cpu)
             auto q1 = _quelle1->als<Operand_Reg *>()->wert();
             auto q2 = _quelle2->als<Operand_Reg *>()->wert();
 
-            cpu->regs[REG_ACC] = cpu->regs[q1] - cpu->regs[q2];
+            cpu->regs[REG_ACU] = cpu->regs[q1] - cpu->regs[q2];
         }
         else if (_quelle2->art() == Operand::OPND_LIT)
         {
             auto q1 = _quelle1->als<Operand_Reg *>()->wert();
             auto q2 = _quelle2->als<Operand_Lit *>()->wert();
 
-            cpu->regs[REG_ACC] = cpu->regs[q1] - q2;
+            cpu->regs[REG_ACU] = cpu->regs[q1] - q2;
         }
     }
     else if (_quelle1->art() == Operand::OPND_LIT)
@@ -852,11 +899,11 @@ Anweisung_Sub::starten(Cpu *cpu)
             auto lit = _quelle1->als<Operand_Lit *>()->wert();
             auto reg = _quelle2->als<Operand_Reg *>()->wert();
 
-            cpu->regs[REG_ACC] = lit - cpu->regs[reg];
+            cpu->regs[REG_ACU] = lit - cpu->regs[reg];
         }
     }
 
-    flags_setzen(cpu, REG_ACC);
+    flags_setzen(cpu, REG_ACU);
 }
 
 void
@@ -891,18 +938,18 @@ Anweisung_Mul::starten(Cpu *cpu)
             auto q1 = _quelle1->als<Operand_Reg *>()->wert();
             auto q2 = _quelle2->als<Operand_Reg *>()->wert();
 
-            cpu->regs[REG_ACC] = cpu->regs[q1] * cpu->regs[q2];
+            cpu->regs[REG_ACU] = cpu->regs[q1] * cpu->regs[q2];
         }
         else if (_quelle2->art() == Operand::OPND_LIT)
         {
             auto q1 = _quelle1->als<Operand_Reg *>()->wert();
             auto q2 = _quelle2->als<Operand_Lit *>()->wert();
 
-            cpu->regs[REG_ACC] = cpu->regs[q1] * q2;
+            cpu->regs[REG_ACU] = cpu->regs[q1] * q2;
         }
     }
 
-    flags_setzen(cpu, REG_ACC);
+    flags_setzen(cpu, REG_ACU);
 }
 
 void
@@ -959,7 +1006,7 @@ Anweisung_And::starten(Cpu *cpu)
         auto wert = _op2->als<Operand_Lit *>()->wert();
         uint16_t erg = cpu->regs[reg] & wert;
 
-        cpu->regs[REG_ACC] = erg;
+        cpu->regs[REG_ACU] = erg;
     }
     else if (_op2->art() == Operand::OPND_REG)
     {
@@ -967,10 +1014,10 @@ Anweisung_And::starten(Cpu *cpu)
         auto wert = cpu->regs[reg2];
         uint16_t erg = cpu->regs[reg] & wert;
 
-        cpu->regs[REG_ACC] = erg;
+        cpu->regs[REG_ACU] = erg;
     }
 
-    flags_setzen(cpu, REG_ACC);
+    flags_setzen(cpu, REG_ACU);
 }
 
 void
@@ -983,7 +1030,7 @@ Anweisung_Or::starten(Cpu *cpu)
         auto wert = _op2->als<Operand_Lit *>()->wert();
         uint16_t erg = cpu->regs[reg] | wert;
 
-        cpu->regs[REG_ACC] = erg;
+        cpu->regs[REG_ACU] = erg;
     }
     else if (_op2->art() == Operand::OPND_REG)
     {
@@ -991,10 +1038,10 @@ Anweisung_Or::starten(Cpu *cpu)
         auto wert = cpu->regs[reg2];
         uint16_t erg = cpu->regs[reg] | wert;
 
-        cpu->regs[REG_ACC] = erg;
+        cpu->regs[REG_ACU] = erg;
     }
 
-    flags_setzen(cpu, REG_ACC);
+    flags_setzen(cpu, REG_ACU);
 }
 
 void
@@ -1007,7 +1054,7 @@ Anweisung_Xor::starten(Cpu *cpu)
         auto wert = _op2->als<Operand_Lit *>()->wert();
         uint16_t erg = cpu->regs[reg] ^ wert;
 
-        cpu->regs[REG_ACC] = erg;
+        cpu->regs[REG_ACU] = erg;
     }
     else if (_op2->art() == Operand::OPND_REG)
     {
@@ -1015,10 +1062,10 @@ Anweisung_Xor::starten(Cpu *cpu)
         auto wert = cpu->regs[reg2];
         uint16_t erg = cpu->regs[reg] ^ wert;
 
-        cpu->regs[REG_ACC] = erg;
+        cpu->regs[REG_ACU] = erg;
     }
 
-    flags_setzen(cpu, REG_ACC);
+    flags_setzen(cpu, REG_ACU);
 }
 
 void
@@ -1239,7 +1286,7 @@ Anweisung_Int::starten(Cpu *cpu)
 }
 
 void
-Anweisung_RInt::starten(Cpu *cpu)
+Anweisung_Rti::starten(Cpu *cpu)
 {
     cpu->in_interrupt_steuerung = false;
 }
@@ -1275,7 +1322,7 @@ Anweisung_Jne::starten(Cpu *cpu)
     if (_op->art() == Operand::OPND_LIT)
     {
         auto wert = _op->als<Operand_Lit *>()->wert();
-        auto acc  = cpu->regs[REG_ACC];
+        auto acc  = cpu->regs[REG_ACU];
 
         if (wert != acc)
         {
@@ -1286,7 +1333,7 @@ Anweisung_Jne::starten(Cpu *cpu)
     {
         auto reg = _op->als<Operand_Reg *>()->wert();
         auto wert = cpu->regs[reg];
-        auto acc = cpu->regs[REG_ACC];
+        auto acc = cpu->regs[REG_ACU];
 
         if (wert != acc)
         {
@@ -1303,7 +1350,7 @@ Anweisung_Jeq::starten(Cpu *cpu)
     if (_op->art() == Operand::OPND_LIT)
     {
         auto wert = _op->als<Operand_Lit *>()->wert();
-        auto acc  = cpu->regs[REG_ACC];
+        auto acc  = cpu->regs[REG_ACU];
 
         if (wert == acc)
         {
@@ -1314,7 +1361,7 @@ Anweisung_Jeq::starten(Cpu *cpu)
     {
         auto reg = _op->als<Operand_Reg *>()->wert();
         auto wert = cpu->regs[reg];
-        auto acc = cpu->regs[REG_ACC];
+        auto acc = cpu->regs[REG_ACU];
 
         if (wert == acc)
         {
@@ -1331,7 +1378,7 @@ Anweisung_Jlt::starten(Cpu *cpu)
     if (_op->art() == Operand::OPND_LIT)
     {
         auto wert = _op->als<Operand_Lit *>()->wert();
-        auto acc  = cpu->regs[REG_ACC];
+        auto acc  = cpu->regs[REG_ACU];
 
         if (wert < acc)
         {
@@ -1342,7 +1389,7 @@ Anweisung_Jlt::starten(Cpu *cpu)
     {
         auto reg = _op->als<Operand_Reg *>()->wert();
         auto wert = cpu->regs[reg];
-        auto acc = cpu->regs[REG_ACC];
+        auto acc = cpu->regs[REG_ACU];
 
         if (wert < acc)
         {
@@ -1359,7 +1406,7 @@ Anweisung_Jgt::starten(Cpu *cpu)
     if (_op->art() == Operand::OPND_LIT)
     {
         auto wert = _op->als<Operand_Lit *>()->wert();
-        auto acc  = cpu->regs[REG_ACC];
+        auto acc  = cpu->regs[REG_ACU];
 
         if (wert > acc)
         {
@@ -1370,7 +1417,7 @@ Anweisung_Jgt::starten(Cpu *cpu)
     {
         auto reg = _op->als<Operand_Reg *>()->wert();
         auto wert = cpu->regs[reg];
-        auto acc = cpu->regs[REG_ACC];
+        auto acc = cpu->regs[REG_ACU];
 
         if (wert > acc)
         {
@@ -1387,7 +1434,7 @@ Anweisung_Jle::starten(Cpu *cpu)
     if (_op->art() == Operand::OPND_LIT)
     {
         auto wert = _op->als<Operand_Lit *>()->wert();
-        auto acc  = cpu->regs[REG_ACC];
+        auto acc  = cpu->regs[REG_ACU];
 
         if (wert <= acc)
         {
@@ -1398,7 +1445,7 @@ Anweisung_Jle::starten(Cpu *cpu)
     {
         auto reg = _op->als<Operand_Reg *>()->wert();
         auto wert = cpu->regs[reg];
-        auto acc = cpu->regs[REG_ACC];
+        auto acc = cpu->regs[REG_ACU];
 
         if (wert <= acc)
         {
@@ -1415,7 +1462,7 @@ Anweisung_Jge::starten(Cpu *cpu)
     if (_op->art() == Operand::OPND_LIT)
     {
         auto wert = _op->als<Operand_Lit *>()->wert();
-        auto acc  = cpu->regs[REG_ACC];
+        auto acc  = cpu->regs[REG_ACU];
 
         if (wert >= acc)
         {
@@ -1426,13 +1473,19 @@ Anweisung_Jge::starten(Cpu *cpu)
     {
         auto reg = _op->als<Operand_Reg *>()->wert();
         auto wert = cpu->regs[reg];
-        auto acc = cpu->regs[REG_ACC];
+        auto acc = cpu->regs[REG_ACU];
 
         if (wert >= acc)
         {
             cpu->regs[REG_IP] = adr;
         }
     }
+}
+
+void
+Anweisung_Brk::starten(Cpu *cpu)
+{
+    cpu->pause = true;
 }
 
 // }}}
@@ -1487,32 +1540,33 @@ Anweisung::Kodieren(Laufwerk *speicher, uint16_t op, std::vector<Operand *> oper
         case OP_CAL_ADR    :  return Anweisung_Cal ::Kodieren(speicher, operanden, adresse);
         case OP_RET        :  return Anweisung_Ret ::Kodieren(speicher, operanden, adresse);
         case OP_INT        :  return Anweisung_Int ::Kodieren(speicher, operanden, adresse);
-        case OP_RET_INT    :  return Anweisung_RInt::Kodieren(speicher, operanden, adresse);
+        case OP_RTI        :  return Anweisung_Rti ::Kodieren(speicher, operanden, adresse);
+        case OP_BRK        :  return Anweisung_Brk ::Kodieren(speicher, operanden, adresse);
 
         default:              return Ergebnis<uint8_t>(Fehler());
     }
 }
 
 void
-Anweisung_Hlt::kodieren(Laufwerk *laufwerk)
+Anweisung_Hlt::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
     //
 }
 
 void
-Anweisung_Nop::kodieren(Laufwerk *laufwerk)
+Anweisung_Nop::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
     //
 }
 
 void
-Anweisung_Ldi::kodieren(Laufwerk *laufwerk)
+Anweisung_Ldi::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
     //
 }
 
 void
-Anweisung_Lea::kodieren(Laufwerk *laufwerk)
+Anweisung_Lea::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
     //
 }
@@ -1555,9 +1609,9 @@ Anweisung_Add::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Add::kodieren(Laufwerk *laufwerk)
+Anweisung_Add::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Add::Kodieren(laufwerk, {_quelle1, _quelle2}, _adresse);
+    Anweisung_Add::Kodieren(laufwerk, {_quelle1, _quelle2}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -1612,9 +1666,9 @@ Anweisung_Sub::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Sub::kodieren(Laufwerk *laufwerk)
+Anweisung_Sub::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Sub::Kodieren(laufwerk, {_quelle1, _quelle2}, _adresse);
+    Anweisung_Sub::Kodieren(laufwerk, {_quelle1, _quelle2}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -1655,9 +1709,9 @@ Anweisung_Mul::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Mul::kodieren(Laufwerk *laufwerk)
+Anweisung_Mul::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Mul::Kodieren(laufwerk, {_quelle1, _quelle2}, _adresse);
+    Anweisung_Mul::Kodieren(laufwerk, {_quelle1, _quelle2}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -1680,9 +1734,9 @@ Anweisung_Inc::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Inc::kodieren(Laufwerk *laufwerk)
+Anweisung_Inc::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Inc::Kodieren(laufwerk, {_op}, _adresse);
+    Anweisung_Inc::Kodieren(laufwerk, {_op}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -1705,9 +1759,9 @@ Anweisung_Dec::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Dec::kodieren(Laufwerk *laufwerk)
+Anweisung_Dec::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Dec::Kodieren(laufwerk, {_op}, _adresse);
+    Anweisung_Dec::Kodieren(laufwerk, {_op}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -1739,9 +1793,9 @@ Anweisung_Lsf::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Lsf::kodieren(Laufwerk *laufwerk)
+Anweisung_Lsf::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Lsf::Kodieren(laufwerk, {_op1, _op2}, _adresse);
+    Anweisung_Lsf::Kodieren(laufwerk, {_op1, _op2}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -1773,9 +1827,9 @@ Anweisung_Rsf::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Rsf::kodieren(Laufwerk *laufwerk)
+Anweisung_Rsf::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Rsf::Kodieren(laufwerk, {_op1, _op2}, _adresse);
+    Anweisung_Rsf::Kodieren(laufwerk, {_op1, _op2}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -1807,9 +1861,9 @@ Anweisung_And::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_And::kodieren(Laufwerk *laufwerk)
+Anweisung_And::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_And::Kodieren(laufwerk, {_op1, _op2}, _adresse);
+    Anweisung_And::Kodieren(laufwerk, {_op1, _op2}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -1841,9 +1895,9 @@ Anweisung_Or::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, uin
 }
 
 void
-Anweisung_Or::kodieren(Laufwerk *laufwerk)
+Anweisung_Or::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Or::Kodieren(laufwerk, {_op1, _op2}, _adresse);
+    Anweisung_Or::Kodieren(laufwerk, {_op1, _op2}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -1875,9 +1929,9 @@ Anweisung_Xor::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Xor::kodieren(Laufwerk *laufwerk)
+Anweisung_Xor::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Xor::Kodieren(laufwerk, {_op1, _op2}, _adresse);
+    Anweisung_Xor::Kodieren(laufwerk, {_op1, _op2}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -1895,9 +1949,9 @@ Anweisung_Not::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Not::kodieren(Laufwerk *laufwerk)
+Anweisung_Not::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Not::Kodieren(laufwerk, {_op}, _adresse);
+    Anweisung_Not::Kodieren(laufwerk, {_op}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -1981,15 +2035,15 @@ Anweisung_Mov::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Mov::kodieren(Laufwerk *laufwerk)
+Anweisung_Mov::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
     if (_versatz == nullptr)
     {
-        Anweisung_Mov::Kodieren(laufwerk, {_ziel, _quelle}, _adresse);
+        Anweisung_Mov::Kodieren(laufwerk, {_ziel, _quelle}, adresse);
     }
     else
     {
-        Anweisung_Mov::Kodieren(laufwerk, {_ziel, _quelle, _versatz}, _adresse);
+        Anweisung_Mov::Kodieren(laufwerk, {_ziel, _quelle, _versatz}, adresse);
     }
 }
 
@@ -2020,9 +2074,9 @@ Anweisung_Push::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, u
 }
 
 void
-Anweisung_Push::kodieren(Laufwerk *laufwerk)
+Anweisung_Push::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Push::Kodieren(laufwerk, {_op}, _adresse);
+    Anweisung_Push::Kodieren(laufwerk, {_op}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -2040,9 +2094,9 @@ Anweisung_Pop::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Pop::kodieren(Laufwerk *laufwerk)
+Anweisung_Pop::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Pop::Kodieren(laufwerk, {_op}, _adresse);
+    Anweisung_Pop::Kodieren(laufwerk, {_op}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -2080,9 +2134,9 @@ Anweisung_Jne::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Jne::kodieren(Laufwerk *laufwerk)
+Anweisung_Jne::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Jne::Kodieren(laufwerk, {_op, _adr}, _adresse);
+    Anweisung_Jne::Kodieren(laufwerk, {_op, _adr}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -2120,9 +2174,9 @@ Anweisung_Jeq::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Jeq::kodieren(Laufwerk *laufwerk)
+Anweisung_Jeq::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Jeq::Kodieren(laufwerk, {_op, _adr}, _adresse);
+    Anweisung_Jeq::Kodieren(laufwerk, {_op, _adr}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -2160,9 +2214,9 @@ Anweisung_Jlt::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Jlt::kodieren(Laufwerk *laufwerk)
+Anweisung_Jlt::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Jlt::Kodieren(laufwerk, {_op, _adr}, _adresse);
+    Anweisung_Jlt::Kodieren(laufwerk, {_op, _adr}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -2200,9 +2254,9 @@ Anweisung_Jgt::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Jgt::kodieren(Laufwerk *laufwerk)
+Anweisung_Jgt::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Jgt::Kodieren(laufwerk, {_op, _adr}, _adresse);
+    Anweisung_Jgt::Kodieren(laufwerk, {_op, _adr}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -2240,9 +2294,9 @@ Anweisung_Jle::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Jle::kodieren(Laufwerk *laufwerk)
+Anweisung_Jle::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Jle::Kodieren(laufwerk, {_op, _adr}, _adresse);
+    Anweisung_Jle::Kodieren(laufwerk, {_op, _adr}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -2280,9 +2334,9 @@ Anweisung_Jge::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Jge::kodieren(Laufwerk *laufwerk)
+Anweisung_Jge::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Jge::Kodieren(laufwerk, {_op, _adr}, _adresse);
+    Anweisung_Jge::Kodieren(laufwerk, {_op, _adr}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -2316,9 +2370,9 @@ Anweisung_Cal::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Cal::kodieren(Laufwerk *laufwerk)
+Anweisung_Cal::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Cal::Kodieren(laufwerk, {_op}, _adresse);
+    Anweisung_Cal::Kodieren(laufwerk, {_op}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -2330,9 +2384,9 @@ Anweisung_Ret::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Ret::kodieren(Laufwerk *laufwerk)
+Anweisung_Ret::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Ret::Kodieren(laufwerk, {}, _adresse);
+    Anweisung_Ret::Kodieren(laufwerk, {}, adresse);
 }
 
 Ergebnis<uint8_t>
@@ -2352,22 +2406,36 @@ Anweisung_Int::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 }
 
 void
-Anweisung_Int::kodieren(Laufwerk *laufwerk)
+Anweisung_Int::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_Int::Kodieren(laufwerk, {_op}, _adresse);
+    Anweisung_Int::Kodieren(laufwerk, {_op}, adresse);
 }
 
 Ergebnis<uint8_t>
-Anweisung_RInt::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, uint16_t adresse)
+Anweisung_Rti::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, uint16_t adresse)
 {
-    IF_SCHREIBE(speicher->schreiben_1byte(adresse, OP_RET_INT));
+    IF_SCHREIBE(speicher->schreiben_1byte(adresse, OP_RTI));
 
     return 1;
 }
 void
-Anweisung_RInt::kodieren(Laufwerk *laufwerk)
+Anweisung_Rti::kodieren(Laufwerk *laufwerk, uint16_t adresse)
 {
-    Anweisung_RInt::Kodieren(laufwerk, {}, _adresse);
+    Anweisung_Rti::Kodieren(laufwerk, {}, adresse);
+}
+
+Ergebnis<uint8_t>
+Anweisung_Brk::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, uint16_t adresse)
+{
+    IF_SCHREIBE(speicher->schreiben_1byte(adresse, OP_BRK));
+
+    return 1;
+}
+
+void
+Anweisung_Brk::kodieren(Laufwerk *laufwerk, uint16_t adresse)
+{
+    Anweisung_Brk::Kodieren(laufwerk, {}, adresse);
 }
 
 // }}}

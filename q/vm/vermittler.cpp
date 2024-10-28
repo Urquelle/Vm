@@ -11,7 +11,7 @@ Vermittler::finden(uint16_t adresse)
 {
     for (auto region : _regionen)
     {
-        if (adresse >= region.anfang && region.ende >= adresse)
+        if ((adresse >= region.anfang) && (region.anfang + region.größe >= adresse))
         {
             return region;
         }

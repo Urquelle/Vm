@@ -36,7 +36,7 @@ enum Flags
     X(REG_SP,    10) \
     X(REG_FP,    11) \
     X(REG_MB,    12) \
-    X(REG_ACC,   13) \
+    X(REG_ACU,   13) \
     X(REG_FLAGS, 14) \
     X(REG_IM,    15)
 enum Register : std::int8_t
@@ -70,6 +70,7 @@ public:
 
     Laufwerk *laufwerk;
     bool halt;
+    bool pause;
     uint16_t z_stack_rahmen;
 
     uint32_t interrupt_vektor_adresse;

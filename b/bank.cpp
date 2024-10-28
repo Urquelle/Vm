@@ -16,21 +16,21 @@ int main (int argc, char **argv)
     auto cpu = new Cpu(vermittler);
 
     size_t anzahl = 8;
-    size_t größe   = 0xff;
+    size_t größe  = 0xff;
 
     auto speicherbank = new Speicherbank(cpu, anzahl, größe);
     auto speicher = new Arbeitsspeicher(0xff00);
 
     vermittler->zuordnen({
         .laufwerk = speicherbank,
-        .anfang = 0x0,
-        .ende = (uint16_t) größe
+        .anfang   = 0x0,
+        .größe    = (uint16_t) größe
     });
 
     vermittler->zuordnen({
         .laufwerk = speicher,
-        .anfang = (uint16_t) größe,
-        .ende = 0xffff,
+        .anfang   = (uint16_t) größe,
+        .größe    = (uint16_t) (0xffff - größe),
         .zuordnen = true
     });
 

@@ -33,7 +33,7 @@ Emitter::deklaration_emittieren(Asm::Deklaration *dekl)
     {
         case Deklaration::DATEN:
         {
-            auto *ast = dekl->als<Ast_Daten *>();
+            auto *ast = dekl->als<Daten *>();
             uint16_t adresse = ast->adresse;
 
             for (auto *daten : ast->daten())
@@ -50,11 +50,6 @@ Emitter::deklaration_emittieren(Asm::Deklaration *dekl)
                 }
             }
         } break;
-
-        default:
-        {
-            int x = 0;
-        } break;
     }
 }
 
@@ -63,7 +58,7 @@ Emitter::anweisung_emittieren(Asm::Anweisung *anweisung)
 {
     auto *vm_anweisung = anweisung->anweisung();
     assert(vm_anweisung != nullptr);
-    vm_anweisung->kodieren(_laufwerk);
+    vm_anweisung->kodieren(_laufwerk, anweisung->adresse);
 }
 
 }

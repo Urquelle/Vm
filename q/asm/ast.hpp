@@ -9,7 +9,7 @@ namespace Asm {
 
 class Anweisung;
 class Ausdruck;
-class Ast_Hex;
+class Hex;
 class Deklaration;
 
 struct Ast
@@ -49,10 +49,10 @@ private:
     std::string _name;
 };
 
-class Ast_Konstante : public Deklaration
+class Konstante : public Deklaration
 {
 public:
-    Ast_Konstante(std::string name, uint16_t wert, bool exportieren);
+    Konstante(std::string name, uint16_t wert, bool exportieren);
 
     void ausgeben(uint8_t tiefe) override;
 
@@ -62,14 +62,14 @@ private:
     uint16_t _wert;
 };
 
-class Ast_Daten : public Deklaration
+class Daten : public Deklaration
 {
 public:
-    Ast_Daten(uint16_t größe, std::string name, uint16_t anzahl, std::vector<Ast_Hex *> daten, bool exportieren);
+    Daten(uint16_t größe, std::string name, uint16_t anzahl, std::vector<Hex *> daten, bool exportieren);
 
     void ausgeben(uint8_t tiefe) override;
 
-    std::vector<Ast_Hex *> daten();
+    std::vector<Hex *> daten();
     uint16_t anzahl();
     uint16_t größe();
     uint32_t gesamtgröße();
@@ -79,10 +79,10 @@ public:
 private:
     uint16_t _anzahl;
     uint16_t _größe;
-    std::vector<Ast_Hex *> _daten;
+    std::vector<Hex *> _daten;
 };
 
-class Ast_Schablone : public Deklaration
+class Schablone : public Deklaration
 {
 public:
     class Feld
@@ -98,7 +98,7 @@ public:
         uint16_t _größe;
     };
 
-    Ast_Schablone(std::string name, std::vector<Feld *> felder);
+    Schablone(std::string name, std::vector<Feld *> felder);
 
     void ausgeben(uint8_t tiefe) override;
     std::vector<Feld *> felder();
@@ -146,10 +146,10 @@ private:
     Art _art;
 };
 
-class Ast_Bin : public Ausdruck
+class Bin : public Ausdruck
 {
 public:
-    Ast_Bin(Token *op, Ausdruck *links, Ausdruck *rechts);
+    Bin(Token *op, Ausdruck *links, Ausdruck *rechts);
 
     void ausgeben(uint8_t tiefe) override;
 
@@ -163,10 +163,10 @@ private:
     Ausdruck *_rechts;
 };
 
-class Ast_Name : public Ausdruck
+class Name : public Ausdruck
 {
 public:
-    Ast_Name(std::string name);
+    Name(std::string name);
 
     void ausgeben(uint8_t tiefe) override;
 
@@ -176,10 +176,10 @@ private:
     std::string _name;
 };
 
-class Ast_Auswertung : public Ausdruck
+class Auswertung : public Ausdruck
 {
 public:
-    Ast_Auswertung(Ausdruck *ausdruck);
+    Auswertung(Ausdruck *ausdruck);
 
     void ausgeben(uint8_t tiefe) override;
 
@@ -189,10 +189,10 @@ private:
     Ausdruck *_ausdruck;
 };
 
-class Ast_Reg : public Ausdruck
+class Reg : public Ausdruck
 {
 public:
-    Ast_Reg(std::string name);
+    Reg(std::string name);
 
     void ausgeben(uint8_t tiefe) override;
 
@@ -203,10 +203,10 @@ private:
     std::string _name;
 };
 
-class Ast_Adresse : public Ausdruck
+class Adresse : public Ausdruck
 {
 public:
-    Ast_Adresse(Ausdruck *ausdruck);
+    Adresse(Ausdruck *ausdruck);
 
     void ausgeben(uint8_t tiefe) override;
     Ausdruck *ausdruck();
@@ -215,10 +215,10 @@ private:
     Ausdruck *_ausdruck;
 };
 
-class Ast_Hex : public Ausdruck
+class Hex : public Ausdruck
 {
 public:
-    Ast_Hex(uint16_t wert);
+    Hex(uint16_t wert);
 
     void ausgeben(uint8_t tiefe) override;
 
@@ -228,10 +228,10 @@ private:
     uint16_t _wert;
 };
 
-class Ast_Text : public Ausdruck
+class Text : public Ausdruck
 {
 public:
-    Ast_Text(std::string text);
+    Text(std::string text);
 
     void ausgeben(uint8_t tiefe) override;
 
@@ -239,10 +239,10 @@ private:
     std::string _text;
 };
 
-class Ast_Variable : public Ausdruck
+class Variable : public Ausdruck
 {
 public:
-    Ast_Variable(std::string name);
+    Variable(std::string name);
 
     void ausgeben(uint8_t tiefe) override;
     std::string name();
@@ -251,10 +251,10 @@ private:
     std::string _name;
 };
 
-class Ast_Klammer : public Ausdruck
+class Klammer : public Ausdruck
 {
 public:
-    Ast_Klammer(Ausdruck *ausdruck);
+    Klammer(Ausdruck *ausdruck);
 
     void ausgeben(uint8_t tiefe) override;
 
@@ -264,10 +264,10 @@ private:
     Ausdruck *_ausdruck;
 };
 
-class Ast_Als : public Ausdruck
+class Als : public Ausdruck
 {
 public:
-    Ast_Als(std::string schablone, std::string basis, std::string feld);
+    Als(std::string schablone, std::string basis, std::string feld);
     void ausgeben(uint8_t tiefe) override;
 
     std::string schablone();
@@ -284,13 +284,13 @@ private:
 class Anweisung
 {
 public:
-    Anweisung(Ast_Name *markierung, std::string op, std::vector<Ausdruck *> operanden);
+    Anweisung(Name *markierung, std::string op, std::vector<Ausdruck *> operanden);
 
     void ausgeben(uint8_t tiefe);
 
     std::string op();
     std::vector<Ausdruck *> operanden();
-    Ast_Name *markierung();
+    Name *markierung();
 
     uint32_t größe();
     Vm::Anweisung *anweisung();
@@ -299,7 +299,7 @@ public:
     uint16_t adresse;
 
 private:
-    Ast_Name *_markierung;
+    Name *_markierung;
     std::string _op;
     std::vector<Ausdruck *> _operanden;
     Vm::Anweisung *_anweisung;

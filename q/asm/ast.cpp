@@ -41,14 +41,14 @@ T Deklaration::als()
     return static_cast<T> (this);
 }
 
-Ast_Konstante::Ast_Konstante(std::string name, uint16_t wert, bool exportieren)
+Konstante::Konstante(std::string name, uint16_t wert, bool exportieren)
     : Deklaration(Deklaration::KONSTANTE, name, exportieren)
     , _wert(wert)
 {
 }
 
 void
-Ast_Konstante::ausgeben(uint8_t tiefe)
+Konstante::ausgeben(uint8_t tiefe)
 {
     Einschub_Ausgeben(tiefe);
     printf("%s: \n", Ast_Namen(art()));
@@ -57,7 +57,7 @@ Ast_Konstante::ausgeben(uint8_t tiefe)
     printf("\n");
 }
 
-Ast_Daten::Ast_Daten(uint16_t größe, std::string name, uint16_t anzahl, std::vector<Ast_Hex *> daten,
+Daten::Daten(uint16_t größe, std::string name, uint16_t anzahl, std::vector<Hex *> daten,
                      bool exportieren)
     : Deklaration(Deklaration::DATEN, name, exportieren)
     , _größe(größe)
@@ -67,7 +67,7 @@ Ast_Daten::Ast_Daten(uint16_t größe, std::string name, uint16_t anzahl, std::v
 }
 
 void
-Ast_Daten::ausgeben(uint8_t tiefe)
+Daten::ausgeben(uint8_t tiefe)
 {
     Einschub_Ausgeben(tiefe);
     printf("%s: \n", Ast_Namen(art()));
@@ -79,45 +79,45 @@ Ast_Daten::ausgeben(uint8_t tiefe)
 }
 
 uint16_t
-Ast_Daten::anzahl()
+Daten::anzahl()
 {
     return _anzahl;
 }
 
 uint16_t
-Ast_Daten::größe()
+Daten::größe()
 {
     return _größe;
 }
 
 uint32_t
-Ast_Daten::gesamtgröße()
+Daten::gesamtgröße()
 {
     uint32_t erg = _größe * _anzahl;
 
     return erg;
 }
 
-std::vector<Ast_Hex *>
-Ast_Daten::daten()
+std::vector<Hex *>
+Daten::daten()
 {
     return _daten;
 }
 
-Ast_Schablone::Ast_Schablone(std::string name, std::vector<Ast_Schablone::Feld *> felder)
+Schablone::Schablone(std::string name, std::vector<Schablone::Feld *> felder)
     : Deklaration(Deklaration::SCHABLONE, name)
     , _felder(felder)
 {
 }
 
 void
-Ast_Schablone::ausgeben(uint8_t tiefe)
+Schablone::ausgeben(uint8_t tiefe)
 {
     //
 }
 
-std::vector<Ast_Schablone::Feld *>
-Ast_Schablone::felder()
+std::vector<Schablone::Feld *>
+Schablone::felder()
 {
     return _felder;
 }
@@ -151,7 +151,7 @@ T Ausdruck::als()
     return static_cast<T> (this);
 }
 
-Ast_Als::Ast_Als(std::string schablone, std::string basis, std::string feld)
+Als::Als(std::string schablone, std::string basis, std::string feld)
     : Ausdruck(Ausdruck::ALS)
     , _schablone(schablone)
     , _basis(basis)
@@ -160,30 +160,30 @@ Ast_Als::Ast_Als(std::string schablone, std::string basis, std::string feld)
 }
 
 void
-Ast_Als::ausgeben(uint8_t tiefe)
+Als::ausgeben(uint8_t tiefe)
 {
     //
 }
 
 std::string
-Ast_Als::schablone()
+Als::schablone()
 {
     return _schablone;
 }
 
 std::string
-Ast_Als::basis()
+Als::basis()
 {
     return _basis;
 }
 
 std::string
-Ast_Als::feld()
+Als::feld()
 {
     return _feld;
 }
 
-Ast_Bin::Ast_Bin(Token *op, Ausdruck *links, Ausdruck *rechts)
+Bin::Bin(Token *op, Ausdruck *links, Ausdruck *rechts)
     : Ausdruck(Ausdruck::BIN)
     , _op(op)
     , _links(links)
@@ -192,7 +192,7 @@ Ast_Bin::Ast_Bin(Token *op, Ausdruck *links, Ausdruck *rechts)
 }
 
 void
-Ast_Bin::ausgeben(uint8_t tiefe)
+Bin::ausgeben(uint8_t tiefe)
 {
     Einschub_Ausgeben(tiefe);
     printf("%s\n", Ast_Namen(art()));
@@ -203,75 +203,75 @@ Ast_Bin::ausgeben(uint8_t tiefe)
     printf("\n");
 }
 
-Ast_Name::Ast_Name(std::string name)
+Name::Name(std::string name)
     : Ausdruck(Ausdruck::NAME)
     , _name(name)
 {
 }
 
 void
-Ast_Name::ausgeben(uint8_t tiefe)
+Name::ausgeben(uint8_t tiefe)
 {
     Einschub_Ausgeben(tiefe);
     printf("%s: %s\n", Ast_Namen(art()), _name.c_str());
 }
 
 std::string
-Ast_Name::name()
+Name::name()
 {
     return _name;
 }
 
-Ast_Reg::Ast_Reg(std::string name)
+Reg::Reg(std::string name)
     : Ausdruck(Ausdruck::REG)
     , _name(name)
 {
 }
 
 void
-Ast_Reg::ausgeben(uint8_t tiefe)
+Reg::ausgeben(uint8_t tiefe)
 {
     Einschub_Ausgeben(tiefe);
     printf("%s: %s\n", Ast_Namen(art()), _name.c_str());
 }
 
 uint32_t
-Ast_Reg::reg()
+Reg::reg()
 {
     auto erg = Register_Id(_name.c_str());
 
     return erg;
 }
 
-Ast_Text::Ast_Text(std::string text)
+Text::Text(std::string text)
     : Ausdruck(Ausdruck::TEXT)
     , _text(text)
 {
 }
 
 void
-Ast_Text::ausgeben(uint8_t tiefe)
+Text::ausgeben(uint8_t tiefe)
 {
     Einschub_Ausgeben(tiefe);
     printf("%s: %s\n", Ast_Namen(art()), _text.c_str());
 }
 
 #if 0
-Ast_Ganzzahl::Ast_Ganzzahl(Token *token)
-    : Ast_Knoten(AST_GANZZAHL)
+Ganzzahl::Ganzzahl(Token *token)
+    : Knoten(AST_GANZZAHL)
     , _token(token)
 {
 }
 
 void
-Ast_Ganzzahl::ausgeben(uint8_t tiefe)
+Ganzzahl::ausgeben(uint8_t tiefe)
 {
     Einschub_Ausgeben(tiefe);
     printf("%s: %s\n", Ast_Namen(_art), _token->text());
 }
 
 uint32_t
-Ast_Ganzzahl::wert()
+Ganzzahl::wert()
 {
     auto erg = _token->als<Token_Ganzzahl *>()->zahl();
 
@@ -279,20 +279,20 @@ Ast_Ganzzahl::wert()
 }
 #endif
 
-Ast_Klammer::Ast_Klammer(Ausdruck *ausdruck)
+Klammer::Klammer(Ausdruck *ausdruck)
     : Ausdruck(Ausdruck::KLAMMER)
     , _ausdruck(ausdruck)
 {
 }
 
 Ausdruck *
-Ast_Klammer::ausdruck()
+Klammer::ausdruck()
 {
     return _ausdruck;
 }
 
 void
-Ast_Klammer::ausgeben(uint8_t tiefe)
+Klammer::ausgeben(uint8_t tiefe)
 {
     Einschub_Ausgeben(tiefe);
     printf("%s \n", Ast_Namen(art()));
@@ -300,14 +300,14 @@ Ast_Klammer::ausgeben(uint8_t tiefe)
     printf("\n");
 }
 
-Ast_Adresse::Ast_Adresse(Ausdruck *ausdruck)
+Adresse::Adresse(Ausdruck *ausdruck)
     : Ausdruck(Ausdruck::ADRESSE)
     , _ausdruck(ausdruck)
 {
 }
 
 void
-Ast_Adresse::ausgeben(uint8_t tiefe)
+Adresse::ausgeben(uint8_t tiefe)
 {
     Einschub_Ausgeben(tiefe);
     printf("%s: \n", Ast_Namen(art()));
@@ -315,19 +315,19 @@ Ast_Adresse::ausgeben(uint8_t tiefe)
 }
 
 Ausdruck *
-Ast_Adresse::ausdruck()
+Adresse::ausdruck()
 {
     return _ausdruck;
 }
 
-Ast_Auswertung::Ast_Auswertung(Ausdruck *ausdruck)
+Auswertung::Auswertung(Ausdruck *ausdruck)
     : Ausdruck(Ausdruck::AUSWERTUNG)
     , _ausdruck(ausdruck)
 {
 }
 
 void
-Ast_Auswertung::ausgeben(uint8_t tiefe)
+Auswertung::ausgeben(uint8_t tiefe)
 {
     Einschub_Ausgeben(tiefe);
     printf("%s: \n", Ast_Namen(art()));
@@ -335,19 +335,19 @@ Ast_Auswertung::ausgeben(uint8_t tiefe)
 }
 
 Ausdruck *
-Ast_Auswertung::ausdruck()
+Auswertung::ausdruck()
 {
     return _ausdruck;
 }
 
-Ast_Variable::Ast_Variable(std::string name)
+Variable::Variable(std::string name)
     : Ausdruck(Ausdruck::VARIABLE)
     , _name(name)
 {
 }
 
 void
-Ast_Variable::ausgeben(uint8_t tiefe)
+Variable::ausgeben(uint8_t tiefe)
 {
     Einschub_Ausgeben(tiefe);
     printf("%s: \n", Ast_Namen(art()));
@@ -356,32 +356,32 @@ Ast_Variable::ausgeben(uint8_t tiefe)
 }
 
 std::string
-Ast_Variable::name()
+Variable::name()
 {
     return _name;
 }
 
-Ast_Hex::Ast_Hex(uint16_t wert)
+Hex::Hex(uint16_t wert)
     : Ausdruck(Ausdruck::HEX)
     , _wert(wert)
 {
 }
 
 uint16_t
-Ast_Hex::wert()
+Hex::wert()
 {
     return _wert;
 }
 
 void
-Ast_Hex::ausgeben(uint8_t tiefe)
+Hex::ausgeben(uint8_t tiefe)
 {
     Einschub_Ausgeben(tiefe);
     printf("%s: 0x%x\n", Ast_Namen(art()), wert());
 }
 // }}}
 // anweisung {{{
-Anweisung::Anweisung(Ast_Name *markierung, std::string op, std::vector<Ausdruck *> operanden)
+Anweisung::Anweisung(Name *markierung, std::string op, std::vector<Ausdruck *> operanden)
     : _markierung(markierung)
     , _op(op)
     , _operanden(operanden)
@@ -452,7 +452,7 @@ Anweisung::operanden()
     return _operanden;
 }
 
-Ast_Name *
+Name *
 Anweisung::markierung()
 {
     return _markierung;
@@ -513,7 +513,7 @@ Register_Id(const char * name)
     if (strcmp(name, "sp")   == 0 || strcmp(name, "SP")  == 0) return Vm::REG_SP;
     if (strcmp(name, "fp")   == 0 || strcmp(name, "FP")  == 0) return Vm::REG_FP;
     if (strcmp(name, "ip")   == 0 || strcmp(name, "IP")  == 0) return Vm::REG_IP;
-    if (strcmp(name, "acc")  == 0 || strcmp(name, "ACC") == 0) return Vm::REG_ACC;
+    if (strcmp(name, "acu")  == 0 || strcmp(name, "ACU") == 0) return Vm::REG_ACU;
 
     return 0;
 }

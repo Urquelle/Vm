@@ -10,62 +10,64 @@
 namespace Vm {
 
 #define Op_Liste \
-    X(OP_HLT,                 0) \
-    /* mov */                    \
-    X(OP_MOV_REG_LIT,         1) \
-    X(OP_MOV_REG_REG,         2) \
-    X(OP_MOV_REG_ADR,         3) \
-    X(OP_MOV_ADR_REG,         4) \
-    X(OP_MOV_ADR_LIT,         5) \
-    X(OP_MOV_REG_REG_ZGR,     6) \
-    X(OP_MOV_REG_LIT_VER_REG, 7) \
-    /* arithmetik */             \
-    X(OP_ADD_REG_REG,         8) \
-    X(OP_ADD_REG_LIT,         9) \
-    X(OP_SUB_REG_REG,        10) \
-    X(OP_SUB_REG_LIT,        11) \
-    X(OP_SUB_LIT_REG,        12) \
-    X(OP_INC_REG,            13) \
-    X(OP_DEC_REG,            14) \
-    X(OP_MUL_REG_REG,        15) \
-    X(OP_MUL_REG_LIT,        16) \
-    /* ... */                    \
-    X(OP_PSH_LIT,            17) \
-    X(OP_PSH_REG,            18) \
-    X(OP_POP,                19) \
-    /* verzweigung */            \
-    X(OP_JNE_LIT,            20) \
-    X(OP_JNE_REG,            21) \
-    X(OP_JEQ_REG,            22) \
-    X(OP_JEQ_LIT,            23) \
-    X(OP_JLT_REG,            24) \
-    X(OP_JLT_LIT,            25) \
-    X(OP_JGT_REG,            26) \
-    X(OP_JGT_LIT,            27) \
-    X(OP_JLE_REG,            28) \
-    X(OP_JLE_LIT,            29) \
-    X(OP_JGE_REG,            30) \
-    X(OP_JGE_LIT,            31) \
-    /* ... */                    \
-    X(OP_CAL_ADR,            32) \
-    X(OP_CAL_REG,            33) \
-    X(OP_RET,                34) \
-    /* shift */                  \
-    X(OP_LSF_REG_LIT,        35) \
-    X(OP_LSF_REG_REG,        36) \
-    X(OP_RSF_REG_LIT,        37) \
-    X(OP_RSF_REG_REG,        38) \
-    /* logik */                  \
-    X(OP_AND_REG_LIT,        39) \
-    X(OP_AND_REG_REG,        40) \
-    X(OP_OR_REG_LIT,         41) \
-    X(OP_OR_REG_REG,         42) \
-    X(OP_XOR_REG_LIT,        43) \
-    X(OP_XOR_REG_REG,        44) \
-    /* ... */                    \
-    X(OP_NOT,                45) \
-    X(OP_INT,                46) \
-    X(OP_RET_INT,            47)
+    X(OP_HLT,                 0, "hlt") \
+    /* mov */                           \
+    X(OP_MOV_REG_LIT,         1, "mov") \
+    X(OP_MOV_REG_REG,         2, "mov") \
+    X(OP_MOV_REG_ADR,         3, "mov") \
+    X(OP_MOV_ADR_REG,         4, "mov") \
+    X(OP_MOV_ADR_LIT,         5, "mov") \
+    X(OP_MOV_REG_REG_ZGR,     6, "mov") \
+    X(OP_MOV_REG_LIT_VER_REG, 7, "mov") \
+    /* arithmetik */                    \
+    X(OP_ADD_REG_REG,         8, "add") \
+    X(OP_ADD_REG_LIT,         9, "add") \
+    X(OP_SUB_REG_REG,        10, "sub") \
+    X(OP_SUB_REG_LIT,        11, "sub") \
+    X(OP_SUB_LIT_REG,        12, "sub") \
+    X(OP_INC_REG,            13, "inc") \
+    X(OP_DEC_REG,            14, "dec") \
+    X(OP_MUL_REG_REG,        15, "mul") \
+    X(OP_MUL_REG_LIT,        16, "mul") \
+    /* ... */                           \
+    X(OP_PSH_LIT,            17, "psh") \
+    X(OP_PSH_REG,            18, "psh") \
+    X(OP_POP,                19, "pop") \
+    /* verzweigung */                   \
+    X(OP_JNE_LIT,            20, "jne") \
+    X(OP_JNE_REG,            21, "jne") \
+    X(OP_JEQ_REG,            22, "jeq") \
+    X(OP_JEQ_LIT,            23, "jeq") \
+    X(OP_JLT_REG,            24, "jlt") \
+    X(OP_JLT_LIT,            25, "jlt") \
+    X(OP_JGT_REG,            26, "jgt") \
+    X(OP_JGT_LIT,            27, "jgt") \
+    X(OP_JLE_REG,            28, "jle") \
+    X(OP_JLE_LIT,            29, "jle") \
+    X(OP_JGE_REG,            30, "jge") \
+    X(OP_JGE_LIT,            31, "jge") \
+    /* ... */                           \
+    X(OP_CAL_ADR,            32, "cal") \
+    X(OP_CAL_REG,            33, "cal") \
+    X(OP_RET,                34, "ret") \
+    /* shift */                         \
+    X(OP_LSF_REG_LIT,        35, "lsf") \
+    X(OP_LSF_REG_REG,        36, "lsf") \
+    X(OP_RSF_REG_LIT,        37, "rsf") \
+    X(OP_RSF_REG_REG,        38, "rsf") \
+    /* logik */                         \
+    X(OP_AND_REG_LIT,        39, "and") \
+    X(OP_AND_REG_REG,        40, "and") \
+    X(OP_OR_REG_LIT,         41, "or")  \
+    X(OP_OR_REG_REG,         42, "or")  \
+    X(OP_XOR_REG_LIT,        43, "xor") \
+    X(OP_XOR_REG_REG,        44, "xor") \
+    /* ... */                           \
+    X(OP_NOT,                45, "not") \
+    X(OP_INT,                46, "int") \
+    X(OP_RTI,                47, "rti") \
+    X(OP_BRK,                48, "brk")
+
 enum Op : std::int8_t
 {
     #define X(Name, Wert, ...) Name = Wert,
@@ -78,7 +80,42 @@ enum Op : std::int8_t
 class Anweisung
 {
 public:
+    enum Art
+    {
+        HLT,
+        NOP,
+        MOV,
+        ADD,
+        SUB,
+        INC,
+        DEC,
+        MUL,
+        PSH,
+        POP,
+        JNE,
+        JEQ,
+        JLT,
+        JGT,
+        JLE,
+        JGE,
+        CAL,
+        RET,
+        LSF,
+        RSF,
+        AND,
+        OR,
+        XOR,
+        NOT,
+        INT,
+        RTI,
+        BRK,
+
+        LDI,
+        LEA
+    };
+
     static Anweisung * Hlt();
+    static Anweisung * Brk();
     static Anweisung * Nop();
     static Anweisung * Mov(Operand *ziel, Operand *quelle);
     static Anweisung * Mov(Operand *ziel, Operand *basis, Operand *versatz);
@@ -104,7 +141,7 @@ public:
     static Anweisung * Jle(Operand *op, Operand *ziel);
     static Anweisung * Jge(Operand *op, Operand *ziel);
     static Anweisung * Int(Operand *id);
-    static Anweisung * RInt();
+    static Anweisung * Rti();
     static Anweisung * Ldi(Operand *ziel, Operand *versatz);
     static Anweisung * Lea(Operand *ziel, Operand *versatz);
 
@@ -112,12 +149,16 @@ public:
     static Ergebnis<uint8_t> Kodieren(Laufwerk *speicher, uint16_t op, std::vector<Operand *> operanden, uint16_t adresse);
 
     virtual void       starten(Cpu *cpu) = 0;
-    virtual void       kodieren(Laufwerk *laufwerk) = 0;
+    virtual void       kodieren(Laufwerk *laufwerk, uint16_t adresse) = 0;
     virtual uint16_t   größe() = 0;
+
+    Anweisung(Art art) : _art(art) {}
+    Art art() { return _art; }
 
     template<typename T> T als();
 
-    uint16_t _adresse;
+private:
+    Art _art;
 };
 
 class Anweisung_Hlt : public Anweisung
@@ -128,7 +169,19 @@ public:
     Anweisung_Hlt();
 
     void starten(Cpu *cpu) override { cpu->halt = true; }
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
+    uint16_t größe() override { return 1; }
+};
+
+class Anweisung_Brk : public Anweisung
+{
+public:
+    static Ergebnis<uint8_t> Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, uint16_t adresse);
+
+    Anweisung_Brk();
+
+    void starten(Cpu *cpu) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1; }
 };
 
@@ -140,7 +193,7 @@ public:
     Anweisung_Nop();
 
     void starten(Cpu *cpu) override {}
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1; }
 };
 
@@ -152,7 +205,7 @@ public:
     Anweisung_Push(Operand *op);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _op->größe(); }
 
 private:
@@ -167,7 +220,7 @@ public:
     Anweisung_Pop(Operand *op);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _op->größe(); }
 
 private:
@@ -182,7 +235,7 @@ public:
     Anweisung_Add(Operand *quelle1, Operand *quelle2);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _quelle1->größe() + _quelle2->größe(); }
 
 private:
@@ -198,7 +251,7 @@ public:
     Anweisung_Sub(Operand *quelle1, Operand *quelle2);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _quelle1->größe() + _quelle2->größe(); }
 
 private:
@@ -214,7 +267,7 @@ public:
     Anweisung_Mul(Operand *quelle1, Operand *quelle2);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _quelle1->größe() + _quelle2->größe(); }
 
 private:
@@ -230,7 +283,7 @@ public:
     Anweisung_Lsf(Operand *op1, Operand *op2);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _op1->größe() + _op2->größe(); }
 
 private:
@@ -246,7 +299,7 @@ public:
     Anweisung_Rsf(Operand *op1, Operand *op2);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _op1->größe() + _op2->größe(); }
 
 private:
@@ -262,7 +315,7 @@ public:
     Anweisung_And(Operand *op1, Operand *op2);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _op1->größe() + _op2->größe(); }
 
 private:
@@ -278,7 +331,7 @@ public:
     Anweisung_Or(Operand *op1, Operand *op2);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _op1->größe() + _op2->größe(); }
 
 private:
@@ -294,7 +347,7 @@ public:
     Anweisung_Xor(Operand *op1, Operand *op2);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _op1->größe() + _op2->größe(); }
 
 private:
@@ -310,7 +363,7 @@ public:
     Anweisung_Not(Operand *op);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _op->größe(); }
 
 private:
@@ -325,7 +378,7 @@ public:
     Anweisung_Cal(Operand *op);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _op->größe(); }
 
 private:
@@ -340,7 +393,7 @@ public:
     Anweisung_Ret();
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1; }
 };
 
@@ -352,7 +405,7 @@ public:
     Anweisung_Inc(Operand *op);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _op->größe(); }
 
 private:
@@ -367,7 +420,7 @@ public:
     Anweisung_Dec(Operand *op);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _op->größe(); }
 
 private:
@@ -383,7 +436,7 @@ public:
     Anweisung_Mov(Operand *ziel, Operand *basis, Operand *versatz);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override;
 
 private:
@@ -403,22 +456,22 @@ public:
     Anweisung_Int(Operand *operand);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _op->größe(); }
 
 private:
     Operand *_op;
 };
 
-class Anweisung_RInt : public Anweisung
+class Anweisung_Rti : public Anweisung
 {
 public:
     static Ergebnis<uint8_t> Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, uint16_t adresse);
 
-    Anweisung_RInt();
+    Anweisung_Rti();
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1; }
 };
 
@@ -430,7 +483,7 @@ public:
     Anweisung_Ldi(Operand *ziel, Operand *versatz);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _ziel->größe() + _versatz->größe(); }
 
 private:
@@ -446,7 +499,7 @@ public:
     Anweisung_Lea(Operand *ziel, Operand *versatz);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _ziel->größe() + _versatz->größe(); }
 
 private:
@@ -462,7 +515,7 @@ public:
     Anweisung_Jne(Operand *op, Operand *adresse);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _op->größe() + _adr->größe(); }
 
 private:
@@ -478,7 +531,7 @@ public:
     Anweisung_Jeq(Operand *op, Operand *adresse);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _op->größe() + _adr->größe(); }
 
 private:
@@ -494,7 +547,7 @@ public:
     Anweisung_Jlt(Operand *op, Operand *adresse);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _op->größe() + _adr->größe(); }
 
 private:
@@ -510,7 +563,7 @@ public:
     Anweisung_Jgt(Operand *op, Operand *adresse);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _op->größe() + _adr->größe(); }
 
 private:
@@ -526,7 +579,7 @@ public:
     Anweisung_Jle(Operand *op, Operand *adresse);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _op->größe() + _adr->größe(); }
 
 private:
@@ -542,7 +595,7 @@ public:
     Anweisung_Jge(Operand *op, Operand *adresse);
 
     void starten(Cpu *cpu) override;
-    void kodieren(Laufwerk *laufwerk) override;
+    void kodieren(Laufwerk *laufwerk, uint16_t adresse) override;
     uint16_t größe() override { return 1 + _op->größe() + _adr->größe(); }
 
 private:

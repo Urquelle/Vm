@@ -15,7 +15,7 @@ public:
     {
         Laufwerk *laufwerk;
         uint16_t anfang;
-        uint16_t ende;
+        uint16_t größe;
         bool     zuordnen;
     };
 

@@ -181,8 +181,20 @@ Lexer::starten()
         }
         else if (z == ';')
         {
-            weiter();
-            erg.push_back(Token::Semikolon(anfang));
+            z = weiter();
+
+            if (z == ';')
+            {
+                // INFO: kommentar einlesen
+                while (z != '\n' && z != '\r')
+                {
+                    z = weiter();
+                }
+            }
+            else
+            {
+                erg.push_back(Token::Semikolon(anfang));
+            }
         }
         else if (z == '!')
         {

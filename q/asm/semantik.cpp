@@ -33,7 +33,7 @@ Semantik::markierungen_registrieren()
     {
         if (dekl->art() == Deklaration::SCHABLONE)
         {
-            auto *schablone = dekl->als<Ast_Schablone *>();
+            auto *schablone = dekl->als<Schablone *>();
 
             std::map<std::string , Symbol_Schablone::Feld *> felder;
             uint16_t versatz = 0;
@@ -59,7 +59,7 @@ Semantik::markierungen_registrieren()
 
         else if (dekl->art() == Deklaration::DATEN)
         {
-            auto *daten = dekl->als<Ast_Daten *>();
+            auto *daten = dekl->als<Daten *>();
             daten->adresse = adresse;
             std::string name = daten->name();
 
@@ -73,7 +73,7 @@ Semantik::markierungen_registrieren()
 
         else if (dekl->art() == Deklaration::KONSTANTE)
         {
-            auto *konstante = dekl->als<Ast_Konstante *>();
+            auto *konstante = dekl->als<Konstante *>();
 
             uint16_t wert = konstante->wert();
             std::string name = konstante->name();
@@ -91,7 +91,7 @@ Semantik::markierungen_registrieren()
 
         if (anweisung->markierung())
         {
-            std::string markierung = anweisung->markierung()->als<Ast_Name *>()->name();
+            std::string markierung = anweisung->markierung()->als<Name *>()->name();
             if (!symbol_registrieren(markierung, new Symbol_Anweisung(markierung, adresse)))
             {
                 assert(!"konnte symbol nicht registrieren");
@@ -130,6 +130,10 @@ Semantik::anweisung_analysieren(Asm::Anweisung *anweisung)
     else if (anweisung->op() == "hlt" || anweisung->op() == "HLT")
     {
         hlt_analysieren(anweisung);
+    }
+    else if (anweisung->op() == "rti" || anweisung->op() == "RTI")
+    {
+        rti_analysieren(anweisung);
     }
     else
     {
@@ -193,7 +197,6 @@ Semantik::add_analysieren(Asm::Anweisung *anweisung)
     if (erfolg)
     {
         anweisung->anweisung_setzen(Vm::Anweisung::Add(op1, op2));
-        anweisung->anweisung()->_adresse = anweisung->adresse;
     }
 }
 
@@ -256,7 +259,6 @@ Semantik::mov_analysieren(Asm::Anweisung *anweisung)
         if (erfolg)
         {
             anweisung->anweisung_setzen(Vm::Anweisung::Mov(op1, op2));
-            anweisung->anweisung()->_adresse = anweisung->adresse;
         }
     }
 }
@@ -277,7 +279,6 @@ Semantik::dec_analysieren(Asm::Anweisung *anweisung)
     auto *op = operand_analysieren(operanden[0]);
 
     anweisung->anweisung_setzen(Vm::Anweisung::Dec(op));
-    anweisung->anweisung()->_adresse = anweisung->adresse;
 }
 
 void
@@ -296,7 +297,6 @@ Semantik::inc_analysieren(Asm::Anweisung *anweisung)
     auto *op = operand_analysieren(operanden[0]);
 
     anweisung->anweisung_setzen(Vm::Anweisung::Inc(op));
-    anweisung->anweisung()->_adresse = anweisung->adresse;
 }
 
 void
@@ -316,7 +316,6 @@ Semantik::jne_analysieren(Asm::Anweisung *anweisung)
     auto *ziel = operand_analysieren(operanden[1]);
 
     anweisung->anweisung_setzen(Vm::Anweisung::Jne(op, ziel));
-    anweisung->anweisung()->_adresse = anweisung->adresse;
 }
 
 void
@@ -325,7 +324,14 @@ Semantik::hlt_analysieren(Asm::Anweisung *anweisung)
     using namespace Vm;
 
     anweisung->anweisung_setzen(Vm::Anweisung::Hlt());
-    anweisung->anweisung()->_adresse = anweisung->adresse;
+}
+
+void
+Semantik::rti_analysieren(Asm::Anweisung *anweisung)
+{
+    using namespace Vm;
+
+    anweisung->anweisung_setzen(Vm::Anweisung::Rti());
 }
 
 Vm::Operand *
@@ -335,25 +341,25 @@ Semantik::operand_analysieren(Ausdruck *op)
 
     if (op->art() == Ausdruck::REG)
     {
-        return Operand::Reg(op->als<Ast_Reg *>()->reg());
+        return Operand::Reg(op->als<Reg *>()->reg());
     }
     else if (op->art() == Ausdruck::HEX)
     {
-        auto wert = op->als<Ast_Hex *>()->wert();
+        auto wert = op->als<Hex *>()->wert();
 
         return Operand::Lit(wert);
     }
 
     else if (op->art() == Ausdruck::AUSWERTUNG)
     {
-        uint16_t wert = ausdruck_auswerten(op->als<Ast_Auswertung *>()->ausdruck());
+        uint16_t wert = ausdruck_auswerten(op->als<Auswertung *>()->ausdruck());
 
         return Operand::Lit(wert);
     }
 
     else if (op->art() == Ausdruck::ADRESSE)
     {
-        auto adr = op->als<Ast_Adresse *>();
+        auto adr = op->als<Adresse *>();
         auto aus = operand_analysieren(adr->ausdruck());
 
         if (aus->art() == Operand::OPND_REG)
@@ -387,7 +393,7 @@ Semantik::ausdruck_auswerten(Ausdruck *ausdruck)
     {
         case Ausdruck::VARIABLE:
         {
-            auto *var = ausdruck->als<Ast_Variable *>();
+            auto *var = ausdruck->als<Variable *>();
             auto *sym = symbol_holen(var->name());
             assert(sym != nullptr);
 
@@ -411,7 +417,7 @@ Semantik::ausdruck_auswerten(Ausdruck *ausdruck)
 
         case Ausdruck::HEX:
         {
-            auto *hex = ausdruck->als<Ast_Hex *>();
+            auto *hex = ausdruck->als<Hex *>();
             auto wert = hex->wert();
 
             erg = wert;
@@ -419,7 +425,7 @@ Semantik::ausdruck_auswerten(Ausdruck *ausdruck)
 
         case Ausdruck::ALS:
         {
-            auto *als = ausdruck->als<Ast_Als *>();
+            auto *als = ausdruck->als<Als *>();
 
             auto *sym = symbol_holen(als->schablone());
             if (sym == nullptr)
@@ -451,7 +457,7 @@ Semantik::ausdruck_auswerten(Ausdruck *ausdruck)
 
         case Ausdruck::BIN:
         {
-            auto *bin = ausdruck->als<Ast_Bin *>();
+            auto *bin = ausdruck->als<Bin *>();
 
             auto wert_links  = ausdruck_auswerten(bin->links());
             auto wert_rechts = ausdruck_auswerten(bin->rechts());
@@ -488,7 +494,7 @@ Semantik::ausdruck_auswerten(Ausdruck *ausdruck)
 
         case Ausdruck::KLAMMER:
         {
-            auto *klammer = ausdruck->als<Ast_Klammer *>();
+            auto *klammer = ausdruck->als<Klammer *>();
             erg = ausdruck_auswerten(klammer->ausdruck());
         } break;
 

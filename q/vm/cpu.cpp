@@ -9,6 +9,7 @@ namespace Vm {
 Cpu::Cpu(Laufwerk *laufwerk, uint32_t interrupt_vektor_adresse)
     : laufwerk(laufwerk)
     , halt(false)
+    , pause(false)
     , interrupt_vektor_adresse(interrupt_vektor_adresse)
 {
     z_stack_rahmen = 0;
@@ -109,6 +110,12 @@ Cpu::ausführen(uint16_t adresse)
     while (!halt)
     {
         schritt();
+
+        if (pause)
+        {
+            __debugbreak();
+            pause = false;
+        }
     }
 }
 

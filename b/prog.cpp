@@ -16,8 +16,8 @@ int main (int argc, char **argv)
 
     vermittler->zuordnen({
         .laufwerk = speicher,
-        .anfang = 0x0,
-        .ende = 0xffff
+        .anfang   = 0x0,
+        .größe    = 0xffff
     });
 
     auto cpu = new Cpu(vermittler);

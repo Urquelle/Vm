@@ -85,16 +85,16 @@ Syntax::zeile_einlesen()
     else if (strcmp(token()->text(), "const") == 0)
     {
         auto konst = weiter();
-        auto *name = brauche<Ast_Name *>(Ausdruck::NAME);
+        auto *name = brauche<Name *>(Ausdruck::NAME);
         erwarte(Token::GLEICH);
-        auto *hex = brauche<Ast_Hex *>(Ausdruck::HEX);
+        auto *hex = brauche<Hex *>(Ausdruck::HEX);
 
         if (name == nullptr || hex == nullptr)
         {
             assert(!"name und wert müssen vorhanden sein.");
         }
 
-        auto dekl = new Ast_Konstante(
+        auto dekl = new Konstante(
             name->name(),
             hex->wert(),
             exportieren);
@@ -130,8 +130,8 @@ Syntax::operand_einlesen()
 Asm::Anweisung *
 Syntax::anweisung_einlesen()
 {
-    Ast_Name *markierung = nullptr;
-    auto *anw = brauche<Ast_Name *>(Ausdruck::NAME);
+    Name *markierung = nullptr;
+    auto *anw = brauche<Name *>(Ausdruck::NAME);
 
     if (anw == nullptr)
     {
@@ -142,7 +142,7 @@ Syntax::anweisung_einlesen()
     {
         markierung = anw;
         akzeptiere(Token::ZEILENUMBRUCH);
-        anw = brauche<Ast_Name *>(Ausdruck::NAME);
+        anw = brauche<Name *>(Ausdruck::NAME);
     }
 
     if (anw == nullptr)
@@ -181,7 +181,7 @@ Syntax::plus_ausdruck_einlesen()
     {
         auto op = weiter();
         auto *rechts = mult_ausdruck_einlesen();
-        links = new Ast_Bin(op, links, rechts);
+        links = new Bin(op, links, rechts);
     }
 
     return links;
@@ -196,7 +196,7 @@ Syntax::mult_ausdruck_einlesen()
     {
         auto op = weiter();
         auto *rechts = basis_ausdruck_einlesen();
-        links = new Ast_Bin(op, links, rechts);
+        links = new Bin(op, links, rechts);
     }
 
     return links;
@@ -213,26 +213,26 @@ Syntax::basis_ausdruck_einlesen()
         case Token::AUSRUFEZEICHEN:
         {
             auto ausrufezeichen = weiter();
-            auto *ausdruck = brauche<Ast_Name *>(Ausdruck::NAME);
+            auto *ausdruck = brauche<Name *>(Ausdruck::NAME);
 
             if (ausdruck == nullptr)
             {
                 assert(!"name erwartet.");
             }
 
-            return new Ast_Variable(ausdruck->name());
+            return new Variable(ausdruck->name());
         } break;
 
         case Token::KLEINER:
         {
             auto *kleiner_als = weiter();
-            auto *schablone = brauche<Ast_Name *>(Ausdruck::NAME);
+            auto *schablone = brauche<Name *>(Ausdruck::NAME);
             auto *größer_als = erwarte(Token::GROESSER);
-            auto *basis = brauche<Ast_Name *>(Ausdruck::NAME);
+            auto *basis = brauche<Name *>(Ausdruck::NAME);
             erwarte(Token::PUNKT);
-            auto *feld = brauche<Ast_Name *>(Ausdruck::NAME);
+            auto *feld = brauche<Name *>(Ausdruck::NAME);
 
-            return new Ast_Als(schablone->name(), basis->name(), feld->name());
+            return new Als(schablone->name(), basis->name(), feld->name());
         } break;
 
         case Token::ECKIGE_KLAMMER_AUF:
@@ -241,7 +241,7 @@ Syntax::basis_ausdruck_einlesen()
             auto *ausdruck = ausdruck_einlesen();
             erwarte(Token::ECKIGE_KLAMMER_ZU);
 
-            return new Ast_Auswertung(ausdruck);
+            return new Auswertung(ausdruck);
         } break;
 
         case Token::KAUFMANNSUND:
@@ -249,7 +249,7 @@ Syntax::basis_ausdruck_einlesen()
             weiter();
             auto *ausdruck = ausdruck_einlesen();
 
-            return new Ast_Adresse(ausdruck);
+            return new Adresse(ausdruck);
         } break;
 
         case Token::NAME:
@@ -281,25 +281,25 @@ Syntax::basis_ausdruck_einlesen()
                 || strcmp(token()->text(), "acc") == 0
                 || strcmp(token()->text(), "ACC") == 0)
             {
-                return new Ast_Reg(weiter()->text());
+                return new Reg(weiter()->text());
             }
 
-            return new Ast_Name(weiter()->text());
+            return new Name(weiter()->text());
         } break;
 
         case Token::HEX:
         {
-            return new Ast_Hex(weiter()->als<Token_Hex *>()->zahl());
+            return new Hex(weiter()->als<Token_Hex *>()->zahl());
         } break;
 
         case Token::TEXT:
         {
-            return new Ast_Text(weiter()->text());
+            return new Text(weiter()->text());
         } break;
 
         case Token::GANZZAHL:
         {
-            /*return new Ast_Ganzzahl(weiter());*/
+            /*return new Ganzzahl(weiter());*/
         } break;
 
         case Token::RUNDE_KLAMMER_AUF:
@@ -308,7 +308,7 @@ Syntax::basis_ausdruck_einlesen()
             auto ausdruck = ausdruck_einlesen();
             erwarte(Token::RUNDE_KLAMMER_ZU);
 
-            return new Ast_Klammer(ausdruck);
+            return new Klammer(ausdruck);
         } break;
     }
 
@@ -321,19 +321,19 @@ Syntax::schablone_dekl_einlesen(bool exportieren)
     Asm::Deklaration *erg = nullptr;
 
     weiter();
-    auto *name = brauche<Ast_Name *>(Ausdruck::NAME);
+    auto *name = brauche<Name *>(Ausdruck::NAME);
 
     akzeptiere(Token::ZEILENUMBRUCH);
     erwarte(Token::GESCHWEIFTE_KLAMMER_AUF);
     akzeptiere(Token::ZEILENUMBRUCH);
 
-    std::vector<Ast_Schablone::Feld *> felder;
+    std::vector<Schablone::Feld *> felder;
     while (ungleich(Token::GESCHWEIFTE_KLAMMER_ZU))
     {
-        auto *feldname = brauche<Ast_Name *>(Ausdruck::NAME);
+        auto *feldname = brauche<Name *>(Ausdruck::NAME);
         erwarte(Token::DOPPELPUNKT);
-        auto *wert = brauche<Ast_Hex *>(Ausdruck::HEX);
-        felder.push_back(new Ast_Schablone::Feld(feldname->name(), wert->wert()));
+        auto *wert = brauche<Hex *>(Ausdruck::HEX);
+        felder.push_back(new Schablone::Feld(feldname->name(), wert->wert()));
 
         akzeptiere(Token::KOMMA);
         akzeptiere(Token::ZEILENUMBRUCH);
@@ -342,7 +342,7 @@ Syntax::schablone_dekl_einlesen(bool exportieren)
     erwarte(Token::GESCHWEIFTE_KLAMMER_ZU);
     akzeptiere(Token::ZEILENUMBRUCH);
 
-    erg = new Ast_Schablone(name->name(), felder);
+    erg = new Schablone(name->name(), felder);
 
     return erg;
 }
@@ -351,7 +351,7 @@ Asm::Deklaration *
 Syntax::daten_dekl_einlesen(uint32_t größe, bool exportieren)
 {
     weiter();
-    auto *name = brauche<Ast_Name *>(Ausdruck::NAME);
+    auto *name = brauche<Name *>(Ausdruck::NAME);
 
     if (name == nullptr)
     {
@@ -361,10 +361,10 @@ Syntax::daten_dekl_einlesen(uint32_t größe, bool exportieren)
     erwarte(Token::GLEICH);
     erwarte(Token::GESCHWEIFTE_KLAMMER_AUF);
 
-    std::vector<Ast_Hex *> daten;
+    std::vector<Hex *> daten;
     while (ungleich(Token::GESCHWEIFTE_KLAMMER_ZU))
     {
-        auto hex = brauche<Ast_Hex *>(Ausdruck::HEX);
+        auto hex = brauche<Hex *>(Ausdruck::HEX);
 
         if (hex == nullptr)
         {
@@ -380,7 +380,7 @@ Syntax::daten_dekl_einlesen(uint32_t größe, bool exportieren)
     // INFO: zeilenumbruch überspringen
     akzeptiere(Token::ZEILENUMBRUCH);
 
-    auto erg = new Ast_Daten(größe, name->name(), (uint16_t) daten.size(), daten, exportieren);
+    auto erg = new Daten(größe, name->name(), (uint16_t) daten.size(), daten, exportieren);
 
     return erg;
 }
