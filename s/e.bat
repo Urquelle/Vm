@@ -13,9 +13,9 @@ pushd %E%
 
 cls
 
-cl %compiler_flags% %PP%\b\prog.cpp -Fevm.exe /link %linker_flags%
-cl %compiler_flags% %PP%\b\bank.cpp -Febank.exe /link %linker_flags%
-cl %compiler_flags% %PP%\b\konsole.cpp -Fekonsole.exe /link %linker_flags%
+rem cl %compiler_flags% %PP%\b\prog.cpp -Fevm.exe /link %linker_flags%
+rem cl %compiler_flags% %PP%\b\bank.cpp -Febank.exe /link %linker_flags%
+rem cl %compiler_flags% %PP%\b\konsole.cpp -Fekonsole.exe /link %linker_flags%
 cl %compiler_flags% /DASM_AST_AUSGEBEN %PP%\b\asm.cpp -Feasm.exe /link %linker_flags%
 
 popd

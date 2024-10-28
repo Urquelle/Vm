@@ -2,7 +2,7 @@
 
 namespace Asm {
 
-Token::Token(uint8_t art, Zeichen z, Position anfang, uint16_t laenge)
+Token::Token(Token::Art art, Zeichen z, Position anfang, uint16_t laenge)
     : _art(art)
     , _position(anfang)
     , _laenge(laenge)
@@ -12,7 +12,7 @@ Token::Token(uint8_t art, Zeichen z, Position anfang, uint16_t laenge)
     _text[_laenge] = 0;
 }
 
-uint8_t
+Token::Art
 Token::art()
 {
     return _art;
@@ -51,7 +51,7 @@ T Token::als()
 Token *
 Token::Eof(Zeichen z)
 {
-    auto erg = new Token(Token::T_EOF, z, z.pos(), 1);
+    auto erg = new Token(Token::ENDE, z, z.pos(), 1);
 
     return erg;
 }
@@ -59,7 +59,7 @@ Token::Eof(Zeichen z)
 Token *
 Token::Text(Zeichen anfang, Zeichen ende)
 {
-    auto erg = new Token(Token::T_TEXT, anfang, anfang.pos(), ende.pos() - anfang.pos());
+    auto erg = new Token(Token::TEXT, anfang, anfang.pos(), ende.pos() - anfang.pos());
 
     return erg;
 }
@@ -67,7 +67,7 @@ Token::Text(Zeichen anfang, Zeichen ende)
 Token *
 Token::Name(Zeichen anfang, Zeichen ende)
 {
-    auto erg = new Token(Token::T_NAME, anfang, anfang.pos(), ende.pos() - anfang.pos());
+    auto erg = new Token(Token::NAME, anfang, anfang.pos(), ende.pos() - anfang.pos());
 
     return erg;
 }
@@ -91,7 +91,7 @@ Token::Hex(Zeichen anfang, Zeichen ende, uint16_t zahl)
 Token *
 Token::Runde_Klammer_Auf(Zeichen z)
 {
-    auto erg = new Token(Token::T_RUNDE_KLAMMER_AUF, z, z.pos(), 1);
+    auto erg = new Token(Token::RUNDE_KLAMMER_AUF, z, z.pos(), 1);
 
     return erg;
 }
@@ -99,7 +99,7 @@ Token::Runde_Klammer_Auf(Zeichen z)
 Token *
 Token::Runde_Klammer_Zu(Zeichen z)
 {
-    auto erg = new Token(Token::T_RUNDE_KLAMMER_ZU, z, z.pos(), 1);
+    auto erg = new Token(Token::RUNDE_KLAMMER_ZU, z, z.pos(), 1);
 
     return erg;
 }
@@ -107,7 +107,7 @@ Token::Runde_Klammer_Zu(Zeichen z)
 Token *
 Token::Eckige_Klammer_Auf(Zeichen z)
 {
-    auto erg = new Token(Token::T_ECKIGE_KLAMMER_AUF, z, z.pos(), 1);
+    auto erg = new Token(Token::ECKIGE_KLAMMER_AUF, z, z.pos(), 1);
 
     return erg;
 }
@@ -115,7 +115,7 @@ Token::Eckige_Klammer_Auf(Zeichen z)
 Token *
 Token::Eckige_Klammer_Zu(Zeichen z)
 {
-    auto erg = new Token(Token::T_ECKIGE_KLAMMER_ZU, z, z.pos(), 1);
+    auto erg = new Token(Token::ECKIGE_KLAMMER_ZU, z, z.pos(), 1);
 
     return erg;
 }
@@ -123,7 +123,7 @@ Token::Eckige_Klammer_Zu(Zeichen z)
 Token *
 Token::Geschweifte_Klammer_Auf(Zeichen z)
 {
-    auto erg = new Token(Token::T_GESCHWEIFTE_KLAMMER_AUF, z, z.pos(), 1);
+    auto erg = new Token(Token::GESCHWEIFTE_KLAMMER_AUF, z, z.pos(), 1);
 
     return erg;
 }
@@ -131,7 +131,7 @@ Token::Geschweifte_Klammer_Auf(Zeichen z)
 Token *
 Token::Geschweifte_Klammer_Zu(Zeichen z)
 {
-    auto erg = new Token(Token::T_GESCHWEIFTE_KLAMMER_ZU, z, z.pos(), 1);
+    auto erg = new Token(Token::GESCHWEIFTE_KLAMMER_ZU, z, z.pos(), 1);
 
     return erg;
 }
@@ -139,7 +139,7 @@ Token::Geschweifte_Klammer_Zu(Zeichen z)
 Token *
 Token::Groesser(Zeichen z)
 {
-    auto erg = new Token(Token::T_GROESSER, z, z.pos(), 1);
+    auto erg = new Token(Token::GROESSER, z, z.pos(), 1);
 
     return erg;
 }
@@ -147,7 +147,7 @@ Token::Groesser(Zeichen z)
 Token *
 Token::Groesser_Gleich(Zeichen z)
 {
-    auto erg = new Token(Token::T_GROESSER_GLEICH, z, z.pos(), 2);
+    auto erg = new Token(Token::GROESSER_GLEICH, z, z.pos(), 2);
 
     return erg;
 }
@@ -155,7 +155,7 @@ Token::Groesser_Gleich(Zeichen z)
 Token *
 Token::Kleiner_Gleich(Zeichen z)
 {
-    auto erg = new Token(Token::T_KLEINER_GLEICH, z, z.pos(), 2);
+    auto erg = new Token(Token::KLEINER_GLEICH, z, z.pos(), 2);
 
     return erg;
 }
@@ -163,7 +163,7 @@ Token::Kleiner_Gleich(Zeichen z)
 Token *
 Token::Kleiner(Zeichen z)
 {
-    auto erg = new Token(Token::T_KLEINER, z, z.pos(), 1);
+    auto erg = new Token(Token::KLEINER, z, z.pos(), 1);
 
     return erg;
 }
@@ -171,7 +171,7 @@ Token::Kleiner(Zeichen z)
 Token *
 Token::Gleich(Zeichen z)
 {
-    auto erg = new Token(Token::T_GLEICH, z, z.pos(), 1);
+    auto erg = new Token(Token::GLEICH, z, z.pos(), 1);
 
     return erg;
 }
@@ -179,7 +179,7 @@ Token::Gleich(Zeichen z)
 Token *
 Token::Gleich_Gleich(Zeichen z)
 {
-    auto erg = new Token(Token::T_GLEICH_GLEICH, z, z.pos(), 2);
+    auto erg = new Token(Token::GLEICH_GLEICH, z, z.pos(), 2);
 
     return erg;
 }
@@ -187,7 +187,7 @@ Token::Gleich_Gleich(Zeichen z)
 Token *
 Token::Punkt(Zeichen z)
 {
-    auto erg = new Token(Token::T_PUNKT, z, z.pos(), 1);
+    auto erg = new Token(Token::PUNKT, z, z.pos(), 1);
 
     return erg;
 }
@@ -195,7 +195,7 @@ Token::Punkt(Zeichen z)
 Token *
 Token::Komma(Zeichen z)
 {
-    auto erg = new Token(Token::T_KOMMA, z, z.pos(), 1);
+    auto erg = new Token(Token::KOMMA, z, z.pos(), 1);
 
     return erg;
 }
@@ -203,7 +203,7 @@ Token::Komma(Zeichen z)
 Token *
 Token::Plus(Zeichen z)
 {
-    auto erg = new Token(Token::T_PLUS, z, z.pos(), 1);
+    auto erg = new Token(Token::PLUS, z, z.pos(), 1);
 
     return erg;
 }
@@ -211,7 +211,7 @@ Token::Plus(Zeichen z)
 Token *
 Token::Minus(Zeichen z)
 {
-    auto erg = new Token(Token::T_MINUS, z, z.pos(), 1);
+    auto erg = new Token(Token::MINUS, z, z.pos(), 1);
 
     return erg;
 }
@@ -219,7 +219,7 @@ Token::Minus(Zeichen z)
 Token *
 Token::Stern(Zeichen z)
 {
-    auto erg = new Token(Token::T_STERN, z, z.pos(), 1);
+    auto erg = new Token(Token::STERN, z, z.pos(), 1);
 
     return erg;
 }
@@ -227,7 +227,7 @@ Token::Stern(Zeichen z)
 Token *
 Token::Pisa(Zeichen z)
 {
-    auto erg = new Token(Token::T_PISA, z, z.pos(), 1);
+    auto erg = new Token(Token::PISA, z, z.pos(), 1);
 
     return erg;
 }
@@ -235,7 +235,7 @@ Token::Pisa(Zeichen z)
 Token *
 Token::Pisa_Links(Zeichen z)
 {
-    auto erg = new Token(Token::T_PISA_LINKS, z, z.pos(), 1);
+    auto erg = new Token(Token::PISA_LINKS, z, z.pos(), 1);
 
     return erg;
 }
@@ -243,7 +243,7 @@ Token::Pisa_Links(Zeichen z)
 Token *
 Token::Raute(Zeichen z)
 {
-    auto erg = new Token(Token::T_RAUTE, z, z.pos(), 1);
+    auto erg = new Token(Token::RAUTE, z, z.pos(), 1);
 
     return erg;
 }
@@ -251,7 +251,7 @@ Token::Raute(Zeichen z)
 Token *
 Token::Prozent(Zeichen z)
 {
-    auto erg = new Token(Token::T_PROZENT, z, z.pos(), 1);
+    auto erg = new Token(Token::PROZENT, z, z.pos(), 1);
 
     return erg;
 }
@@ -259,7 +259,7 @@ Token::Prozent(Zeichen z)
 Token *
 Token::Klammeraffe(Zeichen z)
 {
-    auto erg = new Token(Token::T_KLAMMERAFFE, z, z.pos(), 1);
+    auto erg = new Token(Token::KLAMMERAFFE, z, z.pos(), 1);
 
     return erg;
 }
@@ -267,7 +267,7 @@ Token::Klammeraffe(Zeichen z)
 Token *
 Token::Doppelpunkt(Zeichen z)
 {
-    auto erg = new Token(Token::T_DOPPELPUNKT, z, z.pos(), 1);
+    auto erg = new Token(Token::DOPPELPUNKT, z, z.pos(), 1);
 
     return erg;
 }
@@ -275,7 +275,7 @@ Token::Doppelpunkt(Zeichen z)
 Token *
 Token::Semikolon(Zeichen z)
 {
-    auto erg = new Token(Token::T_SEMIKOLON, z, z.pos(), 1);
+    auto erg = new Token(Token::SEMIKOLON, z, z.pos(), 1);
 
     return erg;
 }
@@ -283,7 +283,7 @@ Token::Semikolon(Zeichen z)
 Token *
 Token::Ausrufezeichen(Zeichen z)
 {
-    auto erg = new Token(Token::T_AUSRUFEZEICHEN, z, z.pos(), 1);
+    auto erg = new Token(Token::AUSRUFEZEICHEN, z, z.pos(), 1);
 
     return erg;
 }
@@ -291,7 +291,7 @@ Token::Ausrufezeichen(Zeichen z)
 Token *
 Token::Kaufmannsund(Zeichen z)
 {
-    auto erg = new Token(Token::T_KAUFMANNSUND, z, z.pos(), 1);
+    auto erg = new Token(Token::KAUFMANNSUND, z, z.pos(), 1);
 
     return erg;
 }
@@ -299,7 +299,7 @@ Token::Kaufmannsund(Zeichen z)
 Token *
 Token::Balken(Zeichen z)
 {
-    auto erg = new Token(Token::T_BALKEN, z, z.pos(), 1);
+    auto erg = new Token(Token::BALKEN, z, z.pos(), 1);
 
     return erg;
 }
@@ -307,13 +307,13 @@ Token::Balken(Zeichen z)
 Token *
 Token::Zeilenumbruch(Zeichen z)
 {
-    auto erg = new Token(Token::T_ZEILENUMBRUCH, z, z.pos(), 1);
+    auto erg = new Token(Token::ZEILENUMBRUCH, z, z.pos(), 1);
 
     return erg;
 }
 
 Token_Ganzzahl::Token_Ganzzahl(Zeichen anfang, Zeichen ende, uint32_t zahl, uint16_t basis)
-    : Token(T_GANZZAHL, anfang, anfang.pos(), ende.pos() - anfang.pos())
+    : Token(GANZZAHL, anfang, anfang.pos(), ende.pos() - anfang.pos())
     , _zahl(zahl)
     , _basis(basis)
 {
@@ -347,7 +347,7 @@ Token_Ganzzahl::ausgeben()
 }
 
 Token_Hex::Token_Hex(Zeichen anfang, Zeichen ende, uint16_t zahl)
-    : Token(T_HEX, anfang, anfang.pos(), ende.pos() - anfang.pos())
+    : Token(HEX, anfang, anfang.pos(), ende.pos() - anfang.pos())
     , _zahl(zahl)
 {
 }
@@ -369,7 +369,7 @@ Token_Namen(uint16_t token_id)
 {
     switch (token_id)
     {
-    #define X(Name) case Token::Name: return (char *) #Name;
+    #define X(N, W, B) case Token::N: return (char *) B;
     Token_Liste
     #undef X
     }

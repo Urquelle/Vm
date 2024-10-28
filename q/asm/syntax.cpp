@@ -5,85 +5,121 @@
 
 namespace Asm {
 
+Syntax::Zeile
+Syntax::zeile_deklaration(Asm::Deklaration *dekl)
+{
+    Zeile erg = {
+        .art = Syntax::Deklaration,
+        .daten = dekl
+    };
+
+    return erg;
+}
+
+Syntax::Zeile
+Syntax::zeile_anweisung(Asm::Anweisung *anweisung)
+{
+    Zeile erg = {
+        .art = Syntax::Anweisung,
+        .daten = anweisung
+    };
+
+    return erg;
+}
+
 Syntax::Syntax(std::vector<Token *> token)
     : _token(token)
     , _token_index(0)
 {
 }
 
-std::vector<Ast_Knoten *>
+Ast
 Syntax::starten()
 {
-    std::vector<Ast_Knoten *> erg;
+    Ast erg;
 
-    auto angabe = zeile_analysieren();
-    akzeptiere(Token::T_ZEILENUMBRUCH);
+    auto zeile = zeile_einlesen();
+    akzeptiere(Token::ZEILENUMBRUCH);
 
-    while (angabe != nullptr)
+    while (zeile.daten != nullptr)
     {
-        erg.push_back(angabe);
-        angabe = zeile_analysieren();
-        akzeptiere(Token::T_ZEILENUMBRUCH);
+        if (zeile.art == Syntax::Deklaration)
+        {
+            erg.deklarationen.push_back((Asm::Deklaration *) zeile.daten);
+        }
+        else if (zeile.art == Syntax::Anweisung)
+        {
+            erg.anweisungen.push_back((Asm::Anweisung *) zeile.daten);
+        }
+        else
+        {
+            assert(!"unbekannt");
+        }
+
+        zeile = zeile_einlesen();
+        akzeptiere(Token::ZEILENUMBRUCH);
     }
 
     return erg;
 }
 
-Ast_Knoten *
-Syntax::zeile_analysieren()
+Syntax::Zeile
+Syntax::zeile_einlesen()
 {
-    auto exportieren = akzeptiere(Token::T_PLUS);
+    auto exportieren = akzeptiere(Token::PLUS);
 
     if (strcmp(token()->text(), "data8") == 0)
     {
         auto dekl = daten_dekl_einlesen(1, exportieren);
+        Zeile erg = zeile_deklaration(dekl);
 
-        return dekl;
+        return erg;
     }
     else if (strcmp(token()->text(), "data16") == 0)
     {
         auto dekl = daten_dekl_einlesen(2, exportieren);
+        Zeile erg = zeile_deklaration(dekl);
 
-        return dekl;
+        return erg;
     }
     else if (strcmp(token()->text(), "const") == 0)
     {
         auto konst = weiter();
+        auto *name = brauche<Ast_Name *>(Ausdruck::NAME);
+        erwarte(Token::GLEICH);
+        auto *hex = brauche<Ast_Hex *>(Ausdruck::HEX);
 
-        auto name = basis_ausdruck_einlesen();
-        if (name == nullptr || name->ungleich(Ast_Knoten::AST_NAME))
+        if (name == nullptr || hex == nullptr)
         {
-            return nullptr;
+            assert(!"name und wert müssen vorhanden sein.");
         }
 
-        erwarte(Token::T_GLEICH);
-        auto hex = basis_ausdruck_einlesen();
-        if (hex == nullptr || (hex->ungleich(Ast_Knoten::AST_HEX) && hex->ungleich(Ast_Knoten::AST_GANZZAHL)))
-        {
-            return nullptr;
-        }
+        auto dekl = new Ast_Konstante(
+            name->name(),
+            hex->wert(),
+            exportieren);
 
-        auto dekl = new Ast_Konstante(konst, name, hex);
+        Zeile erg = zeile_deklaration(dekl);
 
-        dekl->exportieren = exportieren;
-
-        return dekl;
+        return erg;
     }
     else if (strcmp(token()->text(), "schablone") == 0)
     {
-        auto *erg = schablone_dekl_einlesen(exportieren);
+        auto *dekl = schablone_dekl_einlesen(exportieren);
+        Zeile erg = zeile_deklaration(dekl);
 
         return erg;
     }
     else
     {
-        auto anweisung = anweisung_einlesen();
+        auto *anweisung = anweisung_einlesen();
+        auto erg = zeile_anweisung(anweisung);
 
-        return anweisung;
+        return erg;
     }
 }
 
-Ast_Knoten *
+Asm::Ausdruck *
 Syntax::operand_einlesen()
 {
     auto erg = ausdruck_einlesen();
@@ -91,82 +127,82 @@ Syntax::operand_einlesen()
     return erg;
 }
 
-Ast_Knoten *
+Asm::Anweisung *
 Syntax::anweisung_einlesen()
 {
-    Ast_Knoten *markierung = nullptr;
-    auto anw = ausdruck_einlesen();
+    Ast_Name *markierung = nullptr;
+    auto *anw = brauche<Ast_Name *>(Ausdruck::NAME);
 
-    if (anw == nullptr || anw->ungleich(Ast_Knoten::AST_NAME))
+    if (anw == nullptr)
     {
         return nullptr;
     }
 
-    if (akzeptiere(Token::T_DOPPELPUNKT))
+    if (akzeptiere(Token::DOPPELPUNKT))
     {
         markierung = anw;
-        akzeptiere(Token::T_ZEILENUMBRUCH);
-        anw = ausdruck_einlesen();
+        akzeptiere(Token::ZEILENUMBRUCH);
+        anw = brauche<Ast_Name *>(Ausdruck::NAME);
     }
 
-    if (anw->ungleich(Ast_Knoten::AST_NAME))
+    if (anw == nullptr)
     {
         return nullptr;
     }
 
-    std::vector<Ast_Knoten *> ops;
-    while (ungleich(Token::T_ZEILENUMBRUCH) && ungleich(Token::T_EOF))
+    std::vector<Ausdruck *> operanden;
+    while (ungleich(Token::ZEILENUMBRUCH) && ungleich(Token::ENDE))
     {
-        auto op = operand_einlesen();
+        auto *operand = operand_einlesen();
 
-        if (op != nullptr)
+        if (operand != nullptr)
         {
-            ops.push_back(op);
+            operanden.push_back(operand);
         }
     }
 
-    return new Ast_Anweisung(markierung, anw, ops);
+    return new Asm::Anweisung(markierung, anw->name(), operanden);
 }
 
-Ast_Knoten *
+Ausdruck *
 Syntax::ausdruck_einlesen()
 {
-    auto aus = plus_ausdruck_einlesen();
+    auto *aus = plus_ausdruck_einlesen();
 
     return aus;
 }
 
-Ast_Knoten *
+Ausdruck *
 Syntax::plus_ausdruck_einlesen()
 {
-    auto links = mult_ausdruck_einlesen();
+    auto *links = mult_ausdruck_einlesen();
 
-    while (gleich(Token::T_PLUS) || gleich(Token::T_MINUS))
+    while (gleich(Token::PLUS) || gleich(Token::MINUS))
     {
         auto op = weiter();
-        auto rechts = mult_ausdruck_einlesen();
+        auto *rechts = mult_ausdruck_einlesen();
         links = new Ast_Bin(op, links, rechts);
     }
 
     return links;
 }
 
-Ast_Knoten *
+Ausdruck *
 Syntax::mult_ausdruck_einlesen()
 {
-    auto links = basis_ausdruck_einlesen();
+    auto *links = basis_ausdruck_einlesen();
 
-    while (gleich(Token::T_STERN) || gleich(Token::T_PISA))
+    while (gleich(Token::STERN) || gleich(Token::PISA))
     {
         auto op = weiter();
-        auto rechts = basis_ausdruck_einlesen();
+        auto *rechts = basis_ausdruck_einlesen();
         links = new Ast_Bin(op, links, rechts);
     }
 
     return links;
 }
 
-Ast_Knoten *
+Ausdruck *
 Syntax::basis_ausdruck_einlesen()
 {
     auto t = token();
@@ -174,49 +210,49 @@ Syntax::basis_ausdruck_einlesen()
 
     switch (art)
     {
-        case Token::T_AUSRUFEZEICHEN:
+        case Token::AUSRUFEZEICHEN:
         {
             auto ausrufezeichen = weiter();
-            auto *basis = basis_ausdruck_einlesen();
+            auto *ausdruck = brauche<Ast_Name *>(Ausdruck::NAME);
 
-            if (basis == nullptr || basis->art() != Ast_Knoten::AST_NAME)
+            if (ausdruck == nullptr)
             {
                 assert(!"name erwartet.");
             }
 
-            return new Ast_Variable(ausrufezeichen, basis);
+            return new Ast_Variable(ausdruck->name());
         } break;
 
-        case Token::T_KLEINER:
+        case Token::KLEINER:
         {
             auto *kleiner_als = weiter();
-            auto *schablone = brauche(Ast_Knoten::AST_NAME);
-            auto *größer_als = erwarte(Token::T_GROESSER);
-            auto *name = brauche(Ast_Knoten::AST_NAME);
-            erwarte(Token::T_PUNKT);
-            auto *feld = brauche(Ast_Knoten::AST_NAME);
+            auto *schablone = brauche<Ast_Name *>(Ausdruck::NAME);
+            auto *größer_als = erwarte(Token::GROESSER);
+            auto *basis = brauche<Ast_Name *>(Ausdruck::NAME);
+            erwarte(Token::PUNKT);
+            auto *feld = brauche<Ast_Name *>(Ausdruck::NAME);
 
-            return new Ast_Als(kleiner_als, schablone, größer_als, name, feld);
+            return new Ast_Als(schablone->name(), basis->name(), feld->name());
         } break;
 
-        case Token::T_ECKIGE_KLAMMER_AUF:
+        case Token::ECKIGE_KLAMMER_AUF:
         {
-            auto klammer_auf = weiter();
-            auto aus = ausdruck_einlesen();
-            auto klammer_zu = erwarte(Token::T_ECKIGE_KLAMMER_ZU);
+            weiter();
+            auto *ausdruck = ausdruck_einlesen();
+            erwarte(Token::ECKIGE_KLAMMER_ZU);
 
-            return new Ast_Eckige_Klammer(klammer_auf, aus, klammer_zu);
+            return new Ast_Auswertung(ausdruck);
         } break;
 
-        case Token::T_KAUFMANNSUND:
+        case Token::KAUFMANNSUND:
         {
-            auto und = weiter();
+            weiter();
             auto *ausdruck = ausdruck_einlesen();
 
-            return new Ast_Adresse(und, ausdruck);
+            return new Ast_Adresse(ausdruck);
         } break;
 
-        case Token::T_NAME:
+        case Token::NAME:
         {
             if (   strcmp(token()->text(), "r1")  == 0
                 || strcmp(token()->text(), "R1")  == 0
@@ -245,120 +281,119 @@ Syntax::basis_ausdruck_einlesen()
                 || strcmp(token()->text(), "acc") == 0
                 || strcmp(token()->text(), "ACC") == 0)
             {
-                return new Ast_Reg(weiter());
+                return new Ast_Reg(weiter()->text());
             }
 
-            return new Ast_Name(weiter());
+            return new Ast_Name(weiter()->text());
         } break;
 
-        case Token::T_HEX:
+        case Token::HEX:
         {
-            return new Ast_Hex(weiter());
+            return new Ast_Hex(weiter()->als<Token_Hex *>()->zahl());
         } break;
 
-        case Token::T_TEXT:
+        case Token::TEXT:
         {
-            return new Ast_Text(weiter());
+            return new Ast_Text(weiter()->text());
         } break;
 
-        case Token::T_GANZZAHL:
+        case Token::GANZZAHL:
         {
-            return new Ast_Ganzzahl(weiter());
+            /*return new Ast_Ganzzahl(weiter());*/
         } break;
 
-        case Token::T_RUNDE_KLAMMER_AUF:
+        case Token::RUNDE_KLAMMER_AUF:
         {
-            auto klammer_auf = weiter();
+            weiter();
             auto ausdruck = ausdruck_einlesen();
-            auto klammer_zu = erwarte(Token::T_RUNDE_KLAMMER_ZU);
+            erwarte(Token::RUNDE_KLAMMER_ZU);
 
-            return new Ast_Klammer(klammer_auf, ausdruck, klammer_zu);
+            return new Ast_Klammer(ausdruck);
         } break;
     }
 
     return nullptr;
 }
 
-Ast_Knoten *
+Asm::Deklaration *
 Syntax::schablone_dekl_einlesen(bool exportieren)
 {
-    Ast_Knoten *erg = nullptr;
+    Asm::Deklaration *erg = nullptr;
 
-    auto *schablone = weiter();
-    auto *name = brauche(Ast_Knoten::AST_NAME);
-    auto *klammer_auf = erwarte(Token::T_GESCHWEIFTE_KLAMMER_AUF);
+    weiter();
+    auto *name = brauche<Ast_Name *>(Ausdruck::NAME);
+
+    akzeptiere(Token::ZEILENUMBRUCH);
+    erwarte(Token::GESCHWEIFTE_KLAMMER_AUF);
+    akzeptiere(Token::ZEILENUMBRUCH);
 
     std::vector<Ast_Schablone::Feld *> felder;
-    while (ungleich(Token::T_GESCHWEIFTE_KLAMMER_ZU))
+    while (ungleich(Token::GESCHWEIFTE_KLAMMER_ZU))
     {
-        auto *feldname = basis_ausdruck_einlesen();
-        assert(feldname->art() == Ast_Knoten::AST_NAME);
+        auto *feldname = brauche<Ast_Name *>(Ausdruck::NAME);
+        erwarte(Token::DOPPELPUNKT);
+        auto *wert = brauche<Ast_Hex *>(Ausdruck::HEX);
+        felder.push_back(new Ast_Schablone::Feld(feldname->name(), wert->wert()));
 
-        erwarte(Token::T_DOPPELPUNKT);
-        auto *wert = brauche(Ast_Knoten::AST_HEX);
-        felder.push_back(new Ast_Schablone::Feld(feldname, wert));
-        akzeptiere(Token::T_KOMMA);
+        akzeptiere(Token::KOMMA);
+        akzeptiere(Token::ZEILENUMBRUCH);
     }
 
-    auto *klammer_zu = erwarte(Token::T_GESCHWEIFTE_KLAMMER_ZU);
+    erwarte(Token::GESCHWEIFTE_KLAMMER_ZU);
+    akzeptiere(Token::ZEILENUMBRUCH);
 
-    erg = new Ast_Schablone(schablone, name, klammer_auf, felder, klammer_zu);
+    erg = new Ast_Schablone(name->name(), felder);
 
     return erg;
 }
 
-Ast_Knoten *
-Syntax::daten_dekl_einlesen(uint32_t z_daten, bool exportieren)
+Asm::Deklaration *
+Syntax::daten_dekl_einlesen(uint32_t größe, bool exportieren)
 {
-    auto datentyp = weiter();
-    auto name = basis_ausdruck_einlesen();
+    weiter();
+    auto *name = brauche<Ast_Name *>(Ausdruck::NAME);
 
-    if (name == nullptr || name->art() != Ast_Knoten::AST_NAME)
+    if (name == nullptr)
     {
         return nullptr;
     }
 
-    auto gleich = erwarte(Token::T_GLEICH);
-    auto klammer_auf = erwarte(Token::T_GESCHWEIFTE_KLAMMER_AUF);
+    erwarte(Token::GLEICH);
+    erwarte(Token::GESCHWEIFTE_KLAMMER_AUF);
 
-    std::vector<Ast_Knoten *> daten;
-
-    while (ungleich(Token::T_GESCHWEIFTE_KLAMMER_ZU))
+    std::vector<Ast_Hex *> daten;
+    while (ungleich(Token::GESCHWEIFTE_KLAMMER_ZU))
     {
-        auto hex = basis_ausdruck_einlesen();
+        auto hex = brauche<Ast_Hex *>(Ausdruck::HEX);
 
-        if (hex == nullptr || (hex->ungleich(Ast_Knoten::AST_HEX) && hex->ungleich(Ast_Knoten::AST_GANZZAHL)))
+        if (hex == nullptr)
         {
-            // AUFGABE: an dieser stelle sollte vielleicht ein fehler angezeigt werden?
-            break;
+            assert(!"hex ausdruck erwartet");
         }
 
         daten.push_back(hex);
-
-        akzeptiere(Token::T_KOMMA);
+        akzeptiere(Token::KOMMA);
     }
 
-    auto klammer_zu = erwarte(Token::T_GESCHWEIFTE_KLAMMER_ZU);
+    erwarte(Token::GESCHWEIFTE_KLAMMER_ZU);
 
     // INFO: zeilenumbruch überspringen
-    akzeptiere(Token::T_ZEILENUMBRUCH);
+    akzeptiere(Token::ZEILENUMBRUCH);
 
-    auto erg = new Ast_Daten(datentyp, name, gleich, klammer_auf, klammer_zu, z_daten, daten);
-
-    erg->exportieren = exportieren;
+    auto erg = new Ast_Daten(größe, name->name(), (uint16_t) daten.size(), daten, exportieren);
 
     return erg;
 }
 
 /* helfer {{{ */
 
-Ast_Knoten *
-Syntax::brauche(uint32_t art)
+template<typename T> T
+Syntax::brauche(Asm::Ausdruck::Art art)
 {
     auto *ausdruck = ausdruck_einlesen();
-    if (ausdruck && ausdruck->art() == (int32_t) art)
+    if (ausdruck && ausdruck->gleich(art))
     {
-        return ausdruck;
+        return ausdruck->als<T>();
     }
 
     return nullptr;
@@ -397,7 +432,7 @@ Syntax::weiter()
 }
 
 Token *
-Syntax::erwarte(uint32_t art)
+Syntax::erwarte(Token::Art art)
 {
     if (ungleich(art))
     {
@@ -408,7 +443,7 @@ Syntax::erwarte(uint32_t art)
 }
 
 bool
-Syntax::gleich(uint32_t art)
+Syntax::gleich(Token::Art art)
 {
     auto erg = token()->art() == art;
 
@@ -416,7 +451,7 @@ Syntax::gleich(uint32_t art)
 }
 
 bool
-Syntax::ungleich(uint32_t art)
+Syntax::ungleich(Token::Art art)
 {
     auto erg = !gleich(art);
 
@@ -424,7 +459,7 @@ Syntax::ungleich(uint32_t art)
 }
 
 bool
-Syntax::akzeptiere(uint32_t art)
+Syntax::akzeptiere(Token::Art art)
 {
     if (gleich(art))
     {

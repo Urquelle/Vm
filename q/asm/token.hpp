@@ -7,52 +7,50 @@
 #include "allgemein/position.hpp"
 
 #define Token_Liste \
-    X(T_EOF) \
-    X(T_ZEILENUMBRUCH) \
-    X(T_RUNDE_KLAMMER_AUF) \
-    X(T_RUNDE_KLAMMER_ZU) \
-    X(T_ECKIGE_KLAMMER_AUF) \
-    X(T_ECKIGE_KLAMMER_ZU) \
-    X(T_GESCHWEIFTE_KLAMMER_AUF) \
-    X(T_GESCHWEIFTE_KLAMMER_ZU) \
-    X(T_GROESSER) \
-    X(T_GROESSER_GLEICH) \
-    X(T_KLEINER) \
-    X(T_KLEINER_GLEICH) \
-    X(T_GLEICH) \
-    X(T_GLEICH_GLEICH) \
-    X(T_NAME) \
-    X(T_GANZZAHL) \
-    X(T_HEX) \
-    X(T_TEXT) \
-    X(T_KLAMMERAFFE) \
-    X(T_PUNKT) \
-    X(T_KOMMA) \
-    X(T_DOPPELPUNKT) \
-    X(T_SEMIKOLON) \
-    X(T_PLUS) \
-    X(T_MINUS) \
-    X(T_STERN) \
-    X(T_PISA) \
-    X(T_PISA_LINKS) \
-    X(T_RAUTE) \
-    X(T_KAUFMANNSUND) \
-    X(T_BALKEN) \
-    X(T_AUSRUFEZEICHEN) \
-    X(T_PROZENT)
+    X(ENDE, 0, "Ende") \
+    X(ZEILENUMBRUCH, 1, "Zeilenumbruch") \
+    X(RUNDE_KLAMMER_AUF, 2, "(") \
+    X(RUNDE_KLAMMER_ZU, 3, ")") \
+    X(ECKIGE_KLAMMER_AUF, 4, "[") \
+    X(ECKIGE_KLAMMER_ZU, 5, "]") \
+    X(GESCHWEIFTE_KLAMMER_AUF, 6, "{") \
+    X(GESCHWEIFTE_KLAMMER_ZU, 7, "}") \
+    X(GROESSER, 8, ">") \
+    X(GROESSER_GLEICH, 9, ">=") \
+    X(KLEINER, 10, "<") \
+    X(KLEINER_GLEICH, 11, "<=") \
+    X(GLEICH, 12, "=") \
+    X(GLEICH_GLEICH, 13, "==") \
+    X(NAME, 14, "Name") \
+    X(GANZZAHL, 15, "Ganzzahl") \
+    X(HEX, 16, "Hex") \
+    X(TEXT, 17, "Text") \
+    X(KLAMMERAFFE, 18, "@") \
+    X(PUNKT, 19, ".") \
+    X(KOMMA, 20, ",") \
+    X(DOPPELPUNKT, 21, ":") \
+    X(SEMIKOLON, 22, ";") \
+    X(PLUS, 23, "+") \
+    X(MINUS, 24, "-") \
+    X(STERN, 25, "*") \
+    X(PISA, 26, "/") \
+    X(PISA_LINKS, 27, "\\") \
+    X(RAUTE, 28, "#") \
+    X(KAUFMANNSUND, 29, "&") \
+    X(BALKEN, 30, "|") \
+    X(AUSRUFEZEICHEN, 31, "!") \
+    X(PROZENT, 32, "%")
 
 namespace Asm {
 
 class Token
 {
 public:
-    enum
+    enum Art
     {
-        #define X(Name) Name,
+        #define X(N, W, ...) N = W,
         Token_Liste
         #undef X
-
-        Z_TOKENS
     };
 
     static Token * Eof(Zeichen z);
@@ -89,7 +87,7 @@ public:
     static Token * Balken(Zeichen z);
     static Token * Zeilenumbruch(Zeichen z);
 
-    uint8_t art();
+    Art art();
     Position pos();
     uint16_t laenge();
     char * text();
@@ -99,9 +97,9 @@ public:
     template<typename T> T als();
 
 protected:
-    Token(uint8_t art, Zeichen z, Position anfang, uint16_t laenge);
+    Token(Art art, Zeichen z, Position anfang, uint16_t laenge);
 
-    uint8_t _art;
+    Art _art;
     Position _position;
     uint16_t _laenge;
     char *_text;

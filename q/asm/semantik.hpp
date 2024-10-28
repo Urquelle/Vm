@@ -11,28 +11,28 @@ namespace Asm {
 class Semantik
 {
 public:
-    Semantik(std::vector<Ast_Knoten *> anweisungen);
+    Semantik(Ast ast);
 
-    std::vector<Ast_Knoten *> starten();
+    Ast starten();
 
     void markierungen_registrieren();
     bool symbol_registrieren(std::string name, Symbol *symbol);
     Symbol *symbol_holen(std::string name);
 
-    void anweisung_analysieren(Ast_Knoten *anweisung);
-    void mov_analysieren(Ast_Anweisung *mov);
-    void add_analysieren(Ast_Anweisung *mov);
-    void dec_analysieren(Ast_Anweisung *mov);
-    void inc_analysieren(Ast_Anweisung *mov);
-    void jne_analysieren(Ast_Anweisung *mov);
-    void hlt_analysieren(Ast_Anweisung *mov);
+    void anweisung_analysieren(Asm::Anweisung *anweisung);
+    void mov_analysieren(Asm::Anweisung *anweisung);
+    void add_analysieren(Asm::Anweisung *anweisung);
+    void dec_analysieren(Asm::Anweisung *anweisung);
+    void inc_analysieren(Asm::Anweisung *anweisung);
+    void jne_analysieren(Asm::Anweisung *anweisung);
+    void hlt_analysieren(Asm::Anweisung *anweisung);
 
-    Vm::Operand * operand_analysieren(Ast_Knoten *op);
-    uint16_t ausdruck_auswerten(Ast_Knoten *ausdruck);
+    Vm::Operand * operand_analysieren(Ausdruck *op);
+    uint16_t ausdruck_auswerten(Ausdruck *ausdruck);
 
 private:
     std::map<std::string, Symbol *> _symbole;
-    std::vector<Ast_Knoten *> _anweisungen;
+    Ast _ast;
 };
 
 }

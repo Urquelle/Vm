@@ -13,10 +13,10 @@ class Symbol
 public:
     enum Art
     {
-        Konstante = 1,
-        Daten     = 2,
-        Anweisung = 3,
-        Schablone = 4,
+        KONSTANTE = 1,
+        DATEN     = 2,
+        SCHABLONE = 3,
+        ANWEISUNG = 4,
     };
 
     Symbol(Art art, std::string name);

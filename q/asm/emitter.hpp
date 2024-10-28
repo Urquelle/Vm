@@ -7,15 +7,15 @@ namespace Asm {
 class Emitter
 {
 public:
-    Emitter(Vm::Laufwerk *laufwerk, std::vector<Ast_Knoten *> ast);
+    Emitter(Vm::Laufwerk *laufwerk, Ast ast);
 
     void starten();
-    void knoten_emittieren(Ast_Knoten *knoten);
-    void mov_emittieren(Vm::Anweisung_Mov *anweisung);
+    void deklaration_emittieren(Asm::Deklaration *dekl);
+    void anweisung_emittieren(Asm::Anweisung *anweisung);
 
 private:
     Vm::Laufwerk *_laufwerk;
-    std::vector<Ast_Knoten *> _ast;
+    Ast _ast;
 };
 
 }

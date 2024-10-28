@@ -50,9 +50,15 @@ int main(int argc, char **argv)
     auto ast = syntax.starten();
 
 #ifdef ASM_AST_AUSGEBEN
-    for (auto knoten : ast)
+    for (auto knoten : ast.deklarationen)
     {
-        knoten->ausgeben();
+        knoten->ausgeben(0);
+        printf("\n");
+    }
+
+    for (auto knoten : ast.anweisungen)
+    {
+        knoten->ausgeben(0);
         printf("\n");
     }
 #endif

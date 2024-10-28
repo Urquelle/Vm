@@ -27,7 +27,7 @@ T Symbol::als()
 }
 
 Symbol_Konstante::Symbol_Konstante(std::string name, uint16_t wert)
-    : Symbol(Symbol::Konstante, name)
+    : Symbol(Symbol::KONSTANTE, name)
     , _wert(wert)
 {
 }
@@ -39,7 +39,7 @@ Symbol_Konstante::wert()
 }
 
 Symbol_Daten::Symbol_Daten(std::string name, uint16_t adresse)
-    : Symbol(Symbol::Daten, name)
+    : Symbol(Symbol::DATEN, name)
     , _adresse(adresse)
 {
 }
@@ -51,7 +51,7 @@ Symbol_Daten::adresse()
 }
 
 Symbol_Anweisung::Symbol_Anweisung(std::string name, uint16_t adresse)
-    : Symbol(Symbol::Anweisung, name)
+    : Symbol(Symbol::ANWEISUNG, name)
     , _adresse(adresse)
 {
 }
@@ -63,7 +63,7 @@ Symbol_Anweisung::adresse()
 }
 
 Symbol_Schablone::Symbol_Schablone(std::string name, std::map<std::string, Symbol_Schablone::Feld *> felder)
-    : Symbol(Symbol::Schablone, name)
+    : Symbol(Symbol::SCHABLONE, name)
     , _felder(felder)
 {
 }

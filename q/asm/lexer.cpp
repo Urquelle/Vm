@@ -296,7 +296,7 @@ Lexer::starten()
             }
 
             printf("wert: %d, hex: 0x%04X\n", zahl, zahl);
-            erg.push_back(Token::Ganzzahl(anfang, z, zahl, 16));
+            erg.push_back(Token::Hex(anfang, z, zahl));
 
  #if 0
             if (z == 'b')

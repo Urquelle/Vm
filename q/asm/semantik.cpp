@@ -6,22 +6,22 @@
 
 namespace Asm {
 
-Semantik::Semantik(std::vector<Ast_Knoten *> anweisungen)
-    : _anweisungen(anweisungen)
+Semantik::Semantik(Ast ast)
+    : _ast(ast)
 {
 }
 
-std::vector<Ast_Knoten *>
+Ast
 Semantik::starten()
 {
     markierungen_registrieren();
 
-    for (auto anweisung : _anweisungen)
+    for (auto anweisung : _ast.anweisungen)
     {
         anweisung_analysieren(anweisung);
     }
 
-    return _anweisungen;
+    return _ast;
 }
 
 void
@@ -29,30 +29,11 @@ Semantik::markierungen_registrieren()
 {
     uint16_t adresse = 0;
 
-    for (auto *knoten : _anweisungen)
+    for (auto *dekl : _ast.deklarationen)
     {
-        if (knoten->art() == Ast_Knoten::AST_ANWEISUNG)
+        if (dekl->art() == Deklaration::SCHABLONE)
         {
-            auto *anweisung = knoten->als<Ast_Anweisung *>();
-            anweisung->adresse = adresse;
-
-            if (anweisung->markierung())
-            {
-                std::string markierung = anweisung->markierung()->als<Ast_Name *>()->name();
-                if (!symbol_registrieren(markierung, new Symbol_Anweisung(markierung, adresse)))
-                {
-                    assert(!"konnte symbol nicht registrieren");
-                }
-            }
-
-            adresse += anweisung->größe();
-        }
-
-        else if (knoten->art() == Ast_Knoten::AST_SCHABLONE)
-        {
-            assert(!"schablone registrieren");
-
-            auto *schablone = knoten->als<Ast_Schablone *>();
+            auto *schablone = dekl->als<Ast_Schablone *>();
 
             std::map<std::string , Symbol_Schablone::Feld *> felder;
             uint16_t versatz = 0;
@@ -76,87 +57,83 @@ Semantik::markierungen_registrieren()
             }
         }
 
-        else if (knoten->art() == Ast_Knoten::AST_DATEN)
+        else if (dekl->art() == Deklaration::DATEN)
         {
-            auto *daten = knoten->als<Ast_Daten *>();
+            auto *daten = dekl->als<Ast_Daten *>();
             daten->adresse = adresse;
-            std::string name = daten->name()->als<Ast_Name *>()->name();
+            std::string name = daten->name();
 
             if (!symbol_registrieren(name, new Symbol_Daten(name, adresse)))
             {
                 assert(!"konnte symbol nicht registrieren");
             }
 
-            adresse += daten->größe();
+            adresse += daten->gesamtgröße();
         }
 
-        else if (knoten->art() == Ast_Knoten::AST_KONSTANTE)
+        else if (dekl->art() == Deklaration::KONSTANTE)
         {
-            auto *konstante = knoten->als<Ast_Konstante *>();
+            auto *konstante = dekl->als<Ast_Konstante *>();
 
-            uint16_t wert = 0;
-            if (konstante->wert()->art() == Ast_Knoten::AST_HEX)
-            {
-                wert = konstante->wert()->als<Ast_Hex *>()->wert();
-            }
-            else
-            {
-                assert(konstante->wert()->art() == Ast_Knoten::AST_GANZZAHL);
-                wert = konstante->wert()->als<Ast_Ganzzahl *>()->wert();
-            }
+            uint16_t wert = konstante->wert();
+            std::string name = konstante->name();
 
-            std::string name = konstante->name()->als<Ast_Name *>()->name();
             if (!symbol_registrieren(name, new Symbol_Konstante(name, wert)))
             {
                 assert(!"konnte symbol nicht registrieren");
             }
         }
     }
+
+    for (auto *anweisung : _ast.anweisungen)
+    {
+        anweisung->adresse = adresse;
+
+        if (anweisung->markierung())
+        {
+            std::string markierung = anweisung->markierung()->als<Ast_Name *>()->name();
+            if (!symbol_registrieren(markierung, new Symbol_Anweisung(markierung, adresse)))
+            {
+                assert(!"konnte symbol nicht registrieren");
+            }
+        }
+
+        adresse += anweisung->größe();
+    }
 }
 
 void
-Semantik::anweisung_analysieren(Ast_Knoten *anweisung)
+Semantik::anweisung_analysieren(Asm::Anweisung *anweisung)
 {
     assert(anweisung);
 
-    if (anweisung->art() == Ast_Knoten::AST_ANWEISUNG)
+    if (anweisung->op() == "mov" || anweisung->op() == "MOV")
     {
-        auto anw = anweisung->als<Ast_Anweisung *>();
-        if (anw->op()->ungleich(Ast_Knoten::AST_NAME))
-        {
-            assert(!"anweisung muss mit einem gültigen namen anfangen");
-        }
-
-        auto op = anw->op()->als<Ast_Name *>();
-
-        if (strcmp(op->name(), "mov") == 0 || strcmp(op->name(), "MOV") == 0)
-        {
-            mov_analysieren(anw);
-        }
-        else if (strcmp(op->name(), "add") == 0 || strcmp(op->name(), "ADD") == 0)
-        {
-            add_analysieren(anw);
-        }
-        else if (strcmp(op->name(), "dec") == 0 || strcmp(op->name(), "DEC") == 0)
-        {
-            dec_analysieren(anw);
-        }
-        else if (strcmp(op->name(), "inc") == 0 || strcmp(op->name(), "INC") == 0)
-        {
-            inc_analysieren(anw);
-        }
-        else if (strcmp(op->name(), "jne") == 0 || strcmp(op->name(), "JNE") == 0)
-        {
-            jne_analysieren(anw);
-        }
-        else if (strcmp(op->name(), "hlt") == 0 || strcmp(op->name(), "HLT") == 0)
-        {
-            hlt_analysieren(anw);
-        }
-        else
-        {
-            assert(!"unbekannte anweisung");
-        }
+        mov_analysieren(anweisung);
+    }
+    else if (anweisung->op() == "add" || anweisung->op() == "ADD")
+    {
+        add_analysieren(anweisung);
+    }
+    else if (anweisung->op() == "dec" || anweisung->op() == "DEC")
+    {
+        dec_analysieren(anweisung);
+    }
+    else if (anweisung->op() == "inc" || anweisung->op() == "INC")
+    {
+        inc_analysieren(anweisung);
+    }
+    else if (anweisung->op() == "jne" || anweisung->op() == "JNE")
+    {
+        jne_analysieren(anweisung);
+    }
+    else if (anweisung->op() == "hlt" || anweisung->op() == "HLT")
+    {
+        hlt_analysieren(anweisung);
+    }
+    else
+    {
+        assert(!"unbekannte anweisung");
     }
 }
 
@@ -187,11 +164,11 @@ Semantik::symbol_holen(std::string name)
 }
 
 void
-Semantik::add_analysieren(Ast_Anweisung *add)
+Semantik::add_analysieren(Asm::Anweisung *anweisung)
 {
     using namespace Vm;
 
-    auto operanden = add->operanden();
+    auto operanden = anweisung->operanden();
     auto anzahl_operanden = operanden.size();
 
     if (anzahl_operanden < 2 || anzahl_operanden > 3)
@@ -215,17 +192,17 @@ Semantik::add_analysieren(Ast_Anweisung *add)
 
     if (erfolg)
     {
-        add->anweisung_setzen(Anweisung::Add(op1, op2));
-        add->anweisung()->_adresse = add->adresse;
+        anweisung->anweisung_setzen(Vm::Anweisung::Add(op1, op2));
+        anweisung->anweisung()->_adresse = anweisung->adresse;
     }
 }
 
 void
-Semantik::mov_analysieren(Ast_Anweisung *mov)
+Semantik::mov_analysieren(Asm::Anweisung *anweisung)
 {
     using namespace Vm;
 
-    auto operanden = mov->operanden();
+    auto operanden = anweisung->operanden();
     auto anzahl_operanden = operanden.size();
 
     if (anzahl_operanden < 2 || anzahl_operanden > 3)
@@ -278,18 +255,18 @@ Semantik::mov_analysieren(Ast_Anweisung *mov)
 
         if (erfolg)
         {
-            mov->anweisung_setzen(Anweisung::Mov(op1, op2));
-            mov->anweisung()->_adresse = mov->adresse;
+            anweisung->anweisung_setzen(Vm::Anweisung::Mov(op1, op2));
+            anweisung->anweisung()->_adresse = anweisung->adresse;
         }
     }
 }
 
 void
-Semantik::dec_analysieren(Ast_Anweisung *anw)
+Semantik::dec_analysieren(Asm::Anweisung *anweisung)
 {
     using namespace Vm;
 
-    auto operanden = anw->operanden();
+    auto operanden = anweisung->operanden();
     auto anzahl_operanden = operanden.size();
 
     if (anzahl_operanden != 1)
@@ -299,16 +276,16 @@ Semantik::dec_analysieren(Ast_Anweisung *anw)
 
     auto *op = operand_analysieren(operanden[0]);
 
-    anw->anweisung_setzen(Anweisung::Dec(op));
-    anw->anweisung()->_adresse = anw->adresse;
+    anweisung->anweisung_setzen(Vm::Anweisung::Dec(op));
+    anweisung->anweisung()->_adresse = anweisung->adresse;
 }
 
 void
-Semantik::inc_analysieren(Ast_Anweisung *anw)
+Semantik::inc_analysieren(Asm::Anweisung *anweisung)
 {
     using namespace Vm;
 
-    auto operanden = anw->operanden();
+    auto operanden = anweisung->operanden();
     auto anzahl_operanden = operanden.size();
 
     if (anzahl_operanden != 1)
@@ -318,16 +295,16 @@ Semantik::inc_analysieren(Ast_Anweisung *anw)
 
     auto *op = operand_analysieren(operanden[0]);
 
-    anw->anweisung_setzen(Anweisung::Inc(op));
-    anw->anweisung()->_adresse = anw->adresse;
+    anweisung->anweisung_setzen(Vm::Anweisung::Inc(op));
+    anweisung->anweisung()->_adresse = anweisung->adresse;
 }
 
 void
-Semantik::jne_analysieren(Ast_Anweisung *anw)
+Semantik::jne_analysieren(Asm::Anweisung *anweisung)
 {
     using namespace Vm;
 
-    auto operanden = anw->operanden();
+    auto operanden = anweisung->operanden();
     auto anzahl_operanden = operanden.size();
 
     if (anzahl_operanden != 2)
@@ -338,51 +315,43 @@ Semantik::jne_analysieren(Ast_Anweisung *anw)
     auto *op = operand_analysieren(operanden[0]);
     auto *ziel = operand_analysieren(operanden[1]);
 
-    anw->anweisung_setzen(Anweisung::Jne(op, ziel));
-    anw->anweisung()->_adresse = anw->adresse;
+    anweisung->anweisung_setzen(Vm::Anweisung::Jne(op, ziel));
+    anweisung->anweisung()->_adresse = anweisung->adresse;
 }
 
 void
-Semantik::hlt_analysieren(Ast_Anweisung *anw)
+Semantik::hlt_analysieren(Asm::Anweisung *anweisung)
 {
     using namespace Vm;
 
-    anw->anweisung_setzen(Anweisung::Hlt());
-    anw->anweisung()->_adresse = anw->adresse;
+    anweisung->anweisung_setzen(Vm::Anweisung::Hlt());
+    anweisung->anweisung()->_adresse = anweisung->adresse;
 }
 
 Vm::Operand *
-Semantik::operand_analysieren(Ast_Knoten *op)
+Semantik::operand_analysieren(Ausdruck *op)
 {
     using namespace Vm;
 
-    if (op->art() == Ast_Knoten::AST_REG)
+    if (op->art() == Ausdruck::REG)
     {
         return Operand::Reg(op->als<Ast_Reg *>()->reg());
     }
-
-    else if (op->art() == Ast_Knoten::AST_GANZZAHL)
-    {
-        auto wert = op->als<Ast_Ganzzahl *>()->wert();
-
-        return Operand::Lit(wert);
-    }
-
-    else if (op->art() == Ast_Knoten::AST_HEX)
+    else if (op->art() == Ausdruck::HEX)
     {
         auto wert = op->als<Ast_Hex *>()->wert();
 
         return Operand::Lit(wert);
     }
 
-    else if (op->art() == Ast_Knoten::AST_ECKIGE_KLAMMER)
+    else if (op->art() == Ausdruck::AUSWERTUNG)
     {
-        uint16_t wert = ausdruck_auswerten(op->als<Ast_Eckige_Klammer *>()->ausdruck());
+        uint16_t wert = ausdruck_auswerten(op->als<Ast_Auswertung *>()->ausdruck());
 
         return Operand::Lit(wert);
     }
 
-    else if (op->art() == Ast_Knoten::AST_ADRESSE)
+    else if (op->art() == Ausdruck::ADRESSE)
     {
         auto adr = op->als<Ast_Adresse *>();
         auto aus = operand_analysieren(adr->ausdruck());
@@ -410,27 +379,27 @@ Semantik::operand_analysieren(Ast_Knoten *op)
 }
 
 uint16_t
-Semantik::ausdruck_auswerten(Ast_Knoten *ausdruck)
+Semantik::ausdruck_auswerten(Ausdruck *ausdruck)
 {
     uint16_t erg = 0;
 
     switch (ausdruck->art())
     {
-        case Ast_Knoten::AST_VARIABLE:
+        case Ausdruck::VARIABLE:
         {
             auto *var = ausdruck->als<Ast_Variable *>();
             auto *sym = symbol_holen(var->name());
             assert(sym != nullptr);
 
-            if (sym->art() == Symbol::Konstante)
+            if (sym->art() == Symbol::KONSTANTE)
             {
                 erg = sym->als<Symbol_Konstante *>()->wert();
             }
-            else if (sym->art() == Symbol::Daten)
+            else if (sym->art() == Symbol::DATEN)
             {
                 erg = sym->als<Symbol_Daten *>()->adresse();
             }
-            else if (sym->art() == Symbol::Anweisung)
+            else if (sym->art() == Symbol::ANWEISUNG)
             {
                 erg = sym->als<Symbol_Anweisung *>()->adresse();
             }
@@ -440,7 +409,7 @@ Semantik::ausdruck_auswerten(Ast_Knoten *ausdruck)
             }
         } break;
 
-        case Ast_Knoten::AST_HEX:
+        case Ausdruck::HEX:
         {
             auto *hex = ausdruck->als<Ast_Hex *>();
             auto wert = hex->wert();
@@ -448,20 +417,39 @@ Semantik::ausdruck_auswerten(Ast_Knoten *ausdruck)
             erg = wert;
         } break;
 
-        case Ast_Knoten::AST_GANZZAHL:
+        case Ausdruck::ALS:
         {
-            auto *gz = ausdruck->als<Ast_Ganzzahl *>();
-            auto wert = gz->wert();
+            auto *als = ausdruck->als<Ast_Als *>();
 
-            erg = wert;
+            auto *sym = symbol_holen(als->schablone());
+            if (sym == nullptr)
+            {
+                assert(!"keine passende schablone gefunden");
+            }
+
+            auto *basis = symbol_holen(als->basis());
+            if (basis == nullptr)
+            {
+                assert(!"keine passende datenvariable gefunden");
+            }
+
+            if (basis->art() != Symbol::DATEN)
+            {
+                assert(!"basis muss vom datentyp data8 data16 sein");
+            }
+
+            auto *schablone = sym->als<Symbol_Schablone *>();
+            auto *feld = schablone->felder()[als->feld()];
+
+            if (feld == nullptr)
+            {
+                assert(!"das gesuchte feld existiert nicht in der schablone");
+            }
+
+            erg = basis->als<Symbol_Daten *>()->adresse() + feld->versatz();
         } break;
 
-        case Ast_Knoten::AST_ALS:
-        {
-            //
-        } break;
-
-        case Ast_Knoten::AST_BIN:
+        case Ausdruck::BIN:
         {
             auto *bin = ausdruck->als<Ast_Bin *>();
 
@@ -470,22 +458,22 @@ Semantik::ausdruck_auswerten(Ast_Knoten *ausdruck)
 
             switch (bin->op()->art())
             {
-                case Token::T_PLUS:
+                case Token::PLUS:
                 {
                     erg = wert_links + wert_rechts;
                 } break;
 
-                case Token::T_MINUS:
+                case Token::MINUS:
                 {
                     erg = wert_links - wert_rechts;
                 } break;
 
-                case Token::T_STERN:
+                case Token::STERN:
                 {
                     erg = wert_links * wert_rechts;
                 } break;
 
-                case Token::T_PISA:
+                case Token::PISA:
                 {
                     assert(wert_rechts != 0);
                     erg = wert_links / wert_rechts;
@@ -498,7 +486,7 @@ Semantik::ausdruck_auswerten(Ast_Knoten *ausdruck)
             }
         } break;
 
-        case Ast_Knoten::AST_KLAMMER:
+        case Ausdruck::KLAMMER:
         {
             auto *klammer = ausdruck->als<Ast_Klammer *>();
             erg = ausdruck_auswerten(klammer->ausdruck());

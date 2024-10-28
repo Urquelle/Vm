@@ -6,7 +6,7 @@
 
 namespace Asm {
 
-Emitter::Emitter(Vm::Laufwerk *laufwerk, std::vector<Ast_Knoten *> ast)
+Emitter::Emitter(Vm::Laufwerk *laufwerk, Ast ast)
     : _laufwerk(laufwerk)
     , _ast(ast)
 {
@@ -15,41 +15,30 @@ Emitter::Emitter(Vm::Laufwerk *laufwerk, std::vector<Ast_Knoten *> ast)
 void
 Emitter::starten()
 {
-    for (auto *knoten : _ast)
+    for (auto *dekl : _ast.deklarationen)
     {
-        if (knoten->art() == Ast_Knoten::AST_KONSTANTE)
-        {
-            continue;
-        }
+        deklaration_emittieren(dekl);
+    }
 
-        knoten_emittieren(knoten);
+    for (auto *anweisung : _ast.anweisungen)
+    {
+        anweisung_emittieren(anweisung);
     }
 }
 
 void
-Emitter::knoten_emittieren(Ast_Knoten *knoten)
+Emitter::deklaration_emittieren(Asm::Deklaration *dekl)
 {
-    switch (knoten->art())
+    switch (dekl->art())
     {
-        case Ast_Knoten::AST_ANWEISUNG:
+        case Deklaration::DATEN:
         {
-            auto *ast = knoten->als<Ast_Anweisung *>();
-            auto *anweisung = ast->anweisung();
-            assert(anweisung != nullptr);
-            anweisung->kodieren(_laufwerk);
-        } break;
-
-        case Ast_Knoten::AST_DATEN:
-        {
-            auto *ast = knoten->als<Ast_Daten *>();
+            auto *ast = dekl->als<Ast_Daten *>();
             uint16_t adresse = ast->adresse;
 
-            for (auto *d : ast->daten())
+            for (auto *daten : ast->daten())
             {
-                assert(d->art() == Ast_Knoten::AST_HEX);
-                auto *daten = d->als<Ast_Hex *>();
-
-                if (ast->z_daten() == 1)
+                if (ast->größe() == 1)
                 {
                     _laufwerk->schreiben_1byte(adresse, daten->wert());
                     adresse += 1;
@@ -67,6 +56,14 @@ Emitter::knoten_emittieren(Ast_Knoten *knoten)
             int x = 0;
         } break;
     }
+}
+
+void
+Emitter::anweisung_emittieren(Asm::Anweisung *anweisung)
+{
+    auto *vm_anweisung = anweisung->anweisung();
+    assert(vm_anweisung != nullptr);
+    vm_anweisung->kodieren(_laufwerk);
 }
 
 }
