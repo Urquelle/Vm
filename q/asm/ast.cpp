@@ -4,7 +4,9 @@
 
 char * Ast_Namen(Asm::Deklaration::Art art);
 char * Ast_Namen(Asm::Ausdruck::Art art);
-void Einschub_Ausgeben(uint8_t tiefe);
+char * Ast_Namen(Asm::Anweisung::Art art);
+
+void Einschub_Ausgeben(uint8_t tiefe, std::ostream &ausgabe);
 uint32_t Register_Id(const char * name);
 
 namespace Asm {
@@ -41,23 +43,22 @@ T Deklaration::als()
     return static_cast<T> (this);
 }
 
-Konstante::Konstante(std::string name, uint16_t wert, bool exportieren)
+Deklaration_Konstante::Deklaration_Konstante(std::string name, uint16_t wert, bool exportieren)
     : Deklaration(Deklaration::KONSTANTE, name, exportieren)
     , _wert(wert)
 {
 }
 
 void
-Konstante::ausgeben(uint8_t tiefe)
+Deklaration_Konstante::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
-    Einschub_Ausgeben(tiefe);
-    printf("%s: \n", Ast_Namen(art()));
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << std::endl;
     /*_name->ausgeben(tiefe+1);*/
     /*_wert->ausgeben(tiefe+1);*/
-    printf("\n");
 }
 
-Daten::Daten(uint16_t größe, std::string name, uint16_t anzahl, std::vector<Hex *> daten,
+Deklaration_Daten::Deklaration_Daten(uint16_t größe, std::string name, uint16_t anzahl, std::vector<Hex *> daten,
                      bool exportieren)
     : Deklaration(Deklaration::DATEN, name, exportieren)
     , _größe(größe)
@@ -67,31 +68,33 @@ Daten::Daten(uint16_t größe, std::string name, uint16_t anzahl, std::vector<He
 }
 
 void
-Daten::ausgeben(uint8_t tiefe)
+Deklaration_Daten::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
-    Einschub_Ausgeben(tiefe);
-    printf("%s: \n", Ast_Namen(art()));
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << std::endl;
+
     for (auto d : _daten)
     {
-        d->ausgeben(tiefe+1);
+        d->ausgeben(tiefe+1, ausgabe);
     }
-    printf("\n");
+
+    ausgabe << std::endl;
 }
 
 uint16_t
-Daten::anzahl()
+Deklaration_Daten::anzahl()
 {
     return _anzahl;
 }
 
 uint16_t
-Daten::größe()
+Deklaration_Daten::größe()
 {
     return _größe;
 }
 
 uint32_t
-Daten::gesamtgröße()
+Deklaration_Daten::gesamtgröße()
 {
     uint32_t erg = _größe * _anzahl;
 
@@ -99,27 +102,64 @@ Daten::gesamtgröße()
 }
 
 std::vector<Hex *>
-Daten::daten()
+Deklaration_Daten::daten()
 {
     return _daten;
 }
 
-Schablone::Schablone(std::string name, std::vector<Schablone::Feld *> felder)
+Deklaration_Schablone::Deklaration_Schablone(std::string name, std::vector<Deklaration_Schablone::Feld *> felder)
     : Deklaration(Deklaration::SCHABLONE, name)
     , _felder(felder)
 {
 }
 
 void
-Schablone::ausgeben(uint8_t tiefe)
+Deklaration_Schablone::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
-    //
+    ausgabe << "Schablone" << std::endl;
 }
 
-std::vector<Schablone::Feld *>
-Schablone::felder()
+std::vector<Deklaration_Schablone::Feld *>
+Deklaration_Schablone::felder()
 {
     return _felder;
+}
+
+Deklaration_Makro::Deklaration_Makro(std::string name, std::vector<Ausdruck *> parameter, Anweisung *rumpf)
+    : Deklaration(Deklaration::MAKRO, name)
+    , _parameter(parameter)
+    , _rumpf(rumpf)
+{
+}
+
+std::vector<Ausdruck *>
+Deklaration_Makro::parameter()
+{
+    return _parameter;
+}
+
+Anweisung *
+Deklaration_Makro::rumpf()
+{
+    return _rumpf;
+}
+
+void
+Deklaration_Makro::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
+{
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << std::endl;
+
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << "Parameter" << std::endl;
+    for (auto *param : _parameter)
+    {
+        param->ausgeben(tiefe + 1, ausgabe);
+    }
+
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << "Rumpf" << std::endl;
+    _rumpf->ausgeben(tiefe + 1, ausgabe);
 }
 // }}}
 // ausdruck {{{
@@ -160,9 +200,10 @@ Als::Als(std::string schablone, std::string basis, std::string feld)
 }
 
 void
-Als::ausgeben(uint8_t tiefe)
+Als::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
-    //
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << std::endl;
 }
 
 std::string
@@ -192,15 +233,15 @@ Bin::Bin(Token *op, Ausdruck *links, Ausdruck *rechts)
 }
 
 void
-Bin::ausgeben(uint8_t tiefe)
+Bin::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
-    Einschub_Ausgeben(tiefe);
-    printf("%s\n", Ast_Namen(art()));
-    _links->ausgeben(tiefe+1);
-    Einschub_Ausgeben(tiefe+1);
-    printf("%s: \n", Token_Namen(_op->art()));
-    _rechts->ausgeben(tiefe+1);
-    printf("\n");
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << std::endl;
+    _links->ausgeben(tiefe+1, ausgabe);
+    Einschub_Ausgeben(tiefe+1, ausgabe);
+    ausgabe << Token_Namen(_op->art()) << std::endl;
+    _rechts->ausgeben(tiefe+1, ausgabe);
+    ausgabe << std::endl;
 }
 
 Name::Name(std::string name)
@@ -210,10 +251,10 @@ Name::Name(std::string name)
 }
 
 void
-Name::ausgeben(uint8_t tiefe)
+Name::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
-    Einschub_Ausgeben(tiefe);
-    printf("%s: %s\n", Ast_Namen(art()), _name.c_str());
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << ": " << _name << std::endl;
 }
 
 std::string
@@ -229,10 +270,10 @@ Reg::Reg(std::string name)
 }
 
 void
-Reg::ausgeben(uint8_t tiefe)
+Reg::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
-    Einschub_Ausgeben(tiefe);
-    printf("%s: %s\n", Ast_Namen(art()), _name.c_str());
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << ": " << _name << std::endl;
 }
 
 uint32_t
@@ -250,10 +291,10 @@ Text::Text(std::string text)
 }
 
 void
-Text::ausgeben(uint8_t tiefe)
+Text::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
-    Einschub_Ausgeben(tiefe);
-    printf("%s: %s\n", Ast_Namen(art()), _text.c_str());
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << ": " << _text << std::endl;
 }
 
 #if 0
@@ -292,12 +333,12 @@ Klammer::ausdruck()
 }
 
 void
-Klammer::ausgeben(uint8_t tiefe)
+Klammer::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
-    Einschub_Ausgeben(tiefe);
-    printf("%s \n", Ast_Namen(art()));
-    _ausdruck->ausgeben(tiefe + 1);
-    printf("\n");
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << std::endl;
+    _ausdruck->ausgeben(tiefe + 1, ausgabe);
+    ausgabe << std::endl;
 }
 
 Adresse::Adresse(Ausdruck *ausdruck)
@@ -307,11 +348,11 @@ Adresse::Adresse(Ausdruck *ausdruck)
 }
 
 void
-Adresse::ausgeben(uint8_t tiefe)
+Adresse::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
-    Einschub_Ausgeben(tiefe);
-    printf("%s: \n", Ast_Namen(art()));
-    _ausdruck->ausgeben(tiefe + 1);
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << std::endl;
+    _ausdruck->ausgeben(tiefe + 1, ausgabe);
 }
 
 Ausdruck *
@@ -327,11 +368,11 @@ Auswertung::Auswertung(Ausdruck *ausdruck)
 }
 
 void
-Auswertung::ausgeben(uint8_t tiefe)
+Auswertung::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
-    Einschub_Ausgeben(tiefe);
-    printf("%s: \n", Ast_Namen(art()));
-    _ausdruck->ausgeben(tiefe+1);
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << std::endl;
+    _ausdruck->ausgeben(tiefe+1, ausgabe);
 }
 
 Ausdruck *
@@ -347,12 +388,10 @@ Variable::Variable(std::string name)
 }
 
 void
-Variable::ausgeben(uint8_t tiefe)
+Variable::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
-    Einschub_Ausgeben(tiefe);
-    printf("%s: \n", Ast_Namen(art()));
-    /*_name->ausgeben(tiefe+1);*/
-    printf("\n");
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << ": " << _name << std::endl;
 }
 
 std::string
@@ -374,39 +413,108 @@ Hex::wert()
 }
 
 void
-Hex::ausgeben(uint8_t tiefe)
+Hex::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
-    Einschub_Ausgeben(tiefe);
-    printf("%s: 0x%x\n", Ast_Namen(art()), wert());
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << " " << std::format("{:#06x}", wert()) << std::endl;
+}
+
+Block::Block(std::vector<Anweisung *> anweisungen)
+    : Ausdruck(Ausdruck::BLOCK)
+    , _anweisungen(anweisungen)
+{
+}
+
+std::vector<Anweisung *>
+Block::anweisungen()
+{
+    return _anweisungen;
+}
+
+void
+Block::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
+{
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << std::endl;
+
+    for (auto *anweisung : _anweisungen)
+    {
+        anweisung->ausgeben(tiefe + 1, ausgabe);
+    }
 }
 // }}}
 // anweisung {{{
-Anweisung::Anweisung(Name *markierung, std::string op, std::vector<Ausdruck *> operanden)
-    : _markierung(markierung)
+Anweisung::Anweisung(Anweisung::Art art)
+    : _art(art)
+    , _adresse(0)
+    , _vm_anweisung(nullptr)
+{
+}
+
+Anweisung::Art
+Anweisung::art()
+{
+    return _art;
+}
+
+Vm::Anweisung *
+Anweisung::vm_anweisung()
+{
+    return _vm_anweisung;
+}
+
+void
+Anweisung::vm_anweisung_setzen(Vm::Anweisung *vm_anweisung)
+{
+    _vm_anweisung = vm_anweisung;
+}
+
+uint16_t
+Anweisung::adresse()
+{
+    return _adresse;
+}
+
+void
+Anweisung::adresse_setzen(uint16_t adresse)
+{
+    _adresse = adresse;
+}
+
+template<typename T>
+T Anweisung::als()
+{
+    return static_cast<T> (this);
+}
+
+Anweisung_Asm::Anweisung_Asm(Name *markierung, std::string op, std::vector<Ausdruck *> operanden)
+    : Anweisung(Anweisung::ASM)
+    , _markierung(markierung)
     , _op(op)
     , _operanden(operanden)
-    , _anweisung(nullptr)
 {
 }
 
 void
-Anweisung::ausgeben(uint8_t tiefe)
+Anweisung_Asm::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
     if (_markierung)
     {
-        _markierung->ausgeben(tiefe);
+        Einschub_Ausgeben(tiefe, ausgabe);
+        _markierung->ausgeben(tiefe, ausgabe);
     }
 
-    /*_op->ausgeben(tiefe);*/
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << _op << std::endl;
 
     for (auto op : _operanden)
     {
-        op->ausgeben(tiefe + 1);
+        op->ausgeben(tiefe + 1, ausgabe);
     }
 }
 
 uint32_t
-Anweisung::größe()
+Anweisung_Asm::größe()
 {
     uint32_t erg = 1;
 
@@ -441,38 +549,45 @@ Anweisung::größe()
 }
 
 std::string
-Anweisung::op()
+Anweisung_Asm::op()
 {
     return _op;
 }
 
 std::vector<Ausdruck *>
-Anweisung::operanden()
+Anweisung_Asm::operanden()
 {
     return _operanden;
 }
 
 Name *
-Anweisung::markierung()
+Anweisung_Asm::markierung()
 {
     return _markierung;
 }
 
-Vm::Anweisung *
-Anweisung::anweisung()
+Anweisung_Block::Anweisung_Block(std::vector<Anweisung *> anweisungen)
+    : Anweisung(Anweisung::BLOCK)
+    , _anweisungen(anweisungen)
 {
-    return _anweisung;
+}
+
+std::vector<Anweisung *>
+Anweisung_Block::anweisungen()
+{
+    return _anweisungen;
 }
 
 void
-Anweisung::anweisung_setzen(Vm::Anweisung *anweisung)
+Anweisung_Block::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
-    _anweisung = anweisung;
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << std::endl;
 }
 // }}}
 
 }
-
+// helfer {{{
 char *
 Ast_Namen(Asm::Deklaration::Art art)
 {
@@ -499,6 +614,19 @@ Ast_Namen(Asm::Ausdruck::Art art)
     return (char *) "Ausdruck: Unbekannt";
 }
 
+char *
+Ast_Namen(Asm::Anweisung::Art art)
+{
+    switch (art)
+    {
+#define X(Name, Wert, Beschreibung) case Asm::Anweisung::Name: return (char *) Beschreibung;
+        Anweisung_Art
+#undef X
+    }
+
+    return (char *) "Ausdruck: Unbekannt";
+}
+
 uint32_t
 Register_Id(const char * name)
 {
@@ -518,7 +646,11 @@ Register_Id(const char * name)
     return 0;
 }
 
-void Einschub_Ausgeben(uint8_t tiefe)
+void Einschub_Ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
-    printf("%*s", tiefe*3, "");
+    for (int32_t i = 0; i < tiefe*3; ++i)
+    {
+        ausgabe << " ";
+    }
 }
+// }}}

@@ -2,3 +2,8 @@ $ab10 - hex literale
 !name - variablen
 &...  - adresse
 [...] - ausdruck
+
+
+-- AUFGABEN --
+- makros
+- imports

@@ -1,5 +1,11 @@
 #include "position.hpp"
 
+Position::Position()
+    : _index(0)
+    , _q()
+{
+}
+
 Position::Position(uint16_t index, std::string q)
     : _index(index)
     , _q(q)

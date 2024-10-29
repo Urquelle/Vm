@@ -6,6 +6,7 @@
 class Position
 {
 public:
+    Position();
     Position(uint16_t index, std::string q);
 
     uint16_t index() const;

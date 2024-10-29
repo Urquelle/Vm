@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "allgemein/ergebnis.hpp"
+#include "allgemein/diagnostik.hpp"
 #include "asm/ast.hpp"
 #include "asm/token.hpp"
 
@@ -14,8 +15,8 @@ class Syntax
 public:
     enum Art
     {
-        Deklaration = 1,
-        Anweisung = 2,
+        DEKLARATION = 1,
+        ANWEISUNG   = 2,
     };
 
     struct Zeile
@@ -24,6 +25,10 @@ public:
         void *daten;
     };
 
+    static Fehler *Fehler_Name_Erwartet;
+    static Fehler *Fehler_Wert_Erwartet;
+    static Fehler *Fehler_Token_Erwartet;
+
     Syntax(std::vector<Token *> token);
 
     Ast starten();
@@ -31,6 +36,7 @@ public:
     Asm::Anweisung   * anweisung_einlesen();
     Asm::Deklaration * daten_dekl_einlesen(uint32_t z_daten, bool exportieren);
     Asm::Deklaration * schablone_dekl_einlesen(bool exportieren);
+    Asm::Deklaration * makro_dekl_einlesen(bool exportieren);
 
     Asm::Ausdruck * ausdruck_einlesen();
     Asm::Ausdruck * operand_einlesen();
@@ -51,9 +57,13 @@ public:
     Zeile   zeile_deklaration(Asm::Deklaration *dekl);
     Zeile   zeile_anweisung(Asm::Anweisung *anw);
 
+    Diagnostik diagnostik();
+    void melden(Position pos, Fehler *fehler);
+
 private:
     std::vector<Token *> _token;
     uint32_t _token_index;
+    Diagnostik _diagnostik;
 };
 
 }

@@ -1,8 +1,6 @@
 schablone Rechteck {
-    x : $2,
-    y : $2,
-    w : $2,
-    h : $2,
+    x : $2, y : $2,
+    w : $2, h : $2,
 }
 
 code:

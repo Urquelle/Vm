@@ -1,37 +1,37 @@
 #include "ergebnis.hpp"
 
-template <typename TWert>
-Ergebnis<TWert>::Ergebnis(TWert wert)
+template <typename TWert, typename FWert>
+Ergebnis<TWert, FWert>::Ergebnis(TWert wert)
     : _wert(wert), _gut(true)
 {
 }
 
-template <typename TWert>
-Ergebnis<TWert>::Ergebnis(Fehler fehler)
+template <typename TWert, typename FWert>
+Ergebnis<TWert, FWert>::Ergebnis(FWert fehler)
     : _fehler(fehler), _gut(false)
 {
 }
 
-template <typename TWert>
-TWert Ergebnis<TWert>::wert()
+template <typename TWert, typename FWert>
+TWert Ergebnis<TWert, FWert>::wert()
 {
     return _wert;
 }
 
-template <typename TWert>
-Fehler Ergebnis<TWert>::fehler()
+template <typename TWert, typename FWert>
+FWert Ergebnis<TWert, FWert>::fehler()
 {
     return _fehler;
 }
 
-template <typename TWert>
-bool Ergebnis<TWert>::gut()
+template <typename TWert, typename FWert>
+bool Ergebnis<TWert, FWert>::gut()
 {
     return _gut;
 }
 
-template <typename TWert>
-bool Ergebnis<TWert>::schlecht()
+template <typename TWert, typename FWert>
+bool Ergebnis<TWert, FWert>::schlecht()
 {
     return !_gut;
 }

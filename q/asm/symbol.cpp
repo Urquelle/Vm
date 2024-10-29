@@ -5,7 +5,20 @@ namespace Asm {
 Symbol::Symbol(Art art, std::string name)
     : _art(art)
     , _name(name)
+    , _reich(nullptr)
 {
+}
+
+void
+Symbol::reich_setzen(Reich *reich)
+{
+    _reich = reich;
+}
+
+Reich *
+Symbol::reich()
+{
+    return _reich;
 }
 
 Symbol::Art
@@ -72,6 +85,12 @@ std::map<std::string, Symbol_Schablone::Feld *>
 Symbol_Schablone::felder()
 {
     return _felder;
+}
+
+Symbol_Makro::Symbol_Makro(std::string name, Deklaration_Makro *dekl)
+    : Symbol(Symbol::MAKRO, name)
+    , _dekl(dekl)
+{
 }
 
 }

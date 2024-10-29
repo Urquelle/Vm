@@ -9,8 +9,8 @@ namespace Asm {
 
 class Anweisung;
 class Ausdruck;
-class Hex;
 class Deklaration;
+class Hex;
 
 struct Ast
 {
@@ -22,7 +22,8 @@ struct Ast
 #define Deklaration_Art \
     X(KONSTANTE, 1, "Konstante") \
     X(DATEN, 2, "Daten") \
-    X(SCHABLONE, 3, "Schablone")
+    X(SCHABLONE, 3, "Schablone") \
+    X(MAKRO, 4, "Makro")
 
 class Deklaration
 {
@@ -36,7 +37,7 @@ public:
 
     Deklaration(Deklaration::Art art, std::string name, bool exportieren = false);
 
-    virtual void ausgeben(uint8_t tiefe) = 0;
+    virtual void ausgeben(uint8_t tiefe, std::ostream &ausgabe) = 0;
     template<typename T> T als();
 
     Art art();
@@ -49,12 +50,12 @@ private:
     std::string _name;
 };
 
-class Konstante : public Deklaration
+class Deklaration_Konstante : public Deklaration
 {
 public:
-    Konstante(std::string name, uint16_t wert, bool exportieren);
+    Deklaration_Konstante(std::string name, uint16_t wert, bool exportieren);
 
-    void ausgeben(uint8_t tiefe) override;
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
 
     uint16_t wert() { return _wert; }
 
@@ -62,12 +63,12 @@ private:
     uint16_t _wert;
 };
 
-class Daten : public Deklaration
+class Deklaration_Daten : public Deklaration
 {
 public:
-    Daten(uint16_t größe, std::string name, uint16_t anzahl, std::vector<Hex *> daten, bool exportieren);
+    Deklaration_Daten(uint16_t größe, std::string name, uint16_t anzahl, std::vector<Hex *> daten, bool exportieren);
 
-    void ausgeben(uint8_t tiefe) override;
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
 
     std::vector<Hex *> daten();
     uint16_t anzahl();
@@ -82,7 +83,7 @@ private:
     std::vector<Hex *> _daten;
 };
 
-class Schablone : public Deklaration
+class Deklaration_Schablone : public Deklaration
 {
 public:
     class Feld
@@ -98,13 +99,27 @@ public:
         uint16_t _größe;
     };
 
-    Schablone(std::string name, std::vector<Feld *> felder);
+    Deklaration_Schablone(std::string name, std::vector<Feld *> felder);
 
-    void ausgeben(uint8_t tiefe) override;
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     std::vector<Feld *> felder();
 
 private:
     std::vector<Feld *> _felder;
+};
+
+class Deklaration_Makro : public Deklaration
+{
+public:
+    Deklaration_Makro(std::string name, std::vector<Ausdruck *> parameter, Anweisung *rumpf);
+
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
+    std::vector<Ausdruck *> parameter();
+    Anweisung *rumpf();
+
+private:
+    std::vector<Ausdruck *> _parameter;
+    Anweisung *_rumpf;
 };
 // }}}
 // ausdruck {{{
@@ -118,7 +133,8 @@ private:
     X(AUSWERTUNG, 7, "Auswertung") \
     X(ALS, 8, "Als") \
     X(TEXT, 9, "Text") \
-    X(ADRESSE, 10, "Adresse")
+    X(ADRESSE, 10, "Adresse") \
+    X(BLOCK, 11, "Block")
 
 class Ausdruck
 {
@@ -135,7 +151,7 @@ public:
     {
     }
 
-    virtual void ausgeben(uint8_t tiefe) = 0;
+    virtual void ausgeben(uint8_t tiefe, std::ostream &ausgabe) = 0;
     template<typename T> T als();
 
     Art art();
@@ -151,7 +167,7 @@ class Bin : public Ausdruck
 public:
     Bin(Token *op, Ausdruck *links, Ausdruck *rechts);
 
-    void ausgeben(uint8_t tiefe) override;
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
 
     Token *op() { return _op; }
     Ausdruck *links()  { return _links;  }
@@ -168,7 +184,7 @@ class Name : public Ausdruck
 public:
     Name(std::string name);
 
-    void ausgeben(uint8_t tiefe) override;
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
 
     std::string name();
 
@@ -181,7 +197,7 @@ class Auswertung : public Ausdruck
 public:
     Auswertung(Ausdruck *ausdruck);
 
-    void ausgeben(uint8_t tiefe) override;
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
 
     Ausdruck * ausdruck();
 
@@ -194,7 +210,7 @@ class Reg : public Ausdruck
 public:
     Reg(std::string name);
 
-    void ausgeben(uint8_t tiefe) override;
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
 
     uint32_t reg();
     std::string name();
@@ -208,7 +224,7 @@ class Adresse : public Ausdruck
 public:
     Adresse(Ausdruck *ausdruck);
 
-    void ausgeben(uint8_t tiefe) override;
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     Ausdruck *ausdruck();
 
 private:
@@ -220,7 +236,7 @@ class Hex : public Ausdruck
 public:
     Hex(uint16_t wert);
 
-    void ausgeben(uint8_t tiefe) override;
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
 
     uint16_t wert();
 
@@ -233,7 +249,7 @@ class Text : public Ausdruck
 public:
     Text(std::string text);
 
-    void ausgeben(uint8_t tiefe) override;
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
 
 private:
     std::string _text;
@@ -244,7 +260,7 @@ class Variable : public Ausdruck
 public:
     Variable(std::string name);
 
-    void ausgeben(uint8_t tiefe) override;
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     std::string name();
 
 private:
@@ -256,7 +272,7 @@ class Klammer : public Ausdruck
 public:
     Klammer(Ausdruck *ausdruck);
 
-    void ausgeben(uint8_t tiefe) override;
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
 
     Ausdruck *ausdruck();
 
@@ -268,7 +284,7 @@ class Als : public Ausdruck
 {
 public:
     Als(std::string schablone, std::string basis, std::string feld);
-    void ausgeben(uint8_t tiefe) override;
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
 
     std::string schablone();
     std::string basis();
@@ -279,31 +295,85 @@ private:
     std::string _basis;
     std::string _feld;
 };
+
+class Block : public Ausdruck
+{
+public:
+    Block(std::vector<Anweisung *> anweisungen);
+
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
+    std::vector<Anweisung *> anweisungen();
+
+private:
+    std::vector<Anweisung *> _anweisungen;
+};
 // }}}
 // anweisung {{{
+#define Anweisung_Art \
+    X(ASM, 1, "Asm") \
+    X(BLOCK, 2, "Block")
+
 class Anweisung
 {
 public:
-    Anweisung(Name *markierung, std::string op, std::vector<Ausdruck *> operanden);
+    enum Art
+    {
+    #define X(N, W, ...) N = W,
+        Anweisung_Art
+    #undef X
+    };
 
-    void ausgeben(uint8_t tiefe);
+    Anweisung(Art art);
+
+    virtual void ausgeben(uint8_t tiefe, std::ostream &ausgabe) = 0;
+    template<typename T> T als();
+
+    Vm::Anweisung *vm_anweisung();
+    void vm_anweisung_setzen(Vm::Anweisung *vm_anweisung);
+
+    void adresse_setzen(uint16_t adresse);
+    uint16_t adresse();
+
+    Art art();
+
+private:
+    Art _art;
+    uint16_t _adresse;
+    Vm::Anweisung *_vm_anweisung;
+};
+
+class Anweisung_Asm : public Anweisung
+{
+public:
+    Anweisung_Asm(Name *markierung, std::string op, std::vector<Ausdruck *> operanden);
+
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
 
     std::string op();
     std::vector<Ausdruck *> operanden();
     Name *markierung();
 
     uint32_t größe();
-    Vm::Anweisung *anweisung();
-    void anweisung_setzen(Vm::Anweisung *anweisung);
-
-    uint16_t adresse;
 
 private:
     Name *_markierung;
     std::string _op;
     std::vector<Ausdruck *> _operanden;
-    Vm::Anweisung *_anweisung;
 };
+
+class Anweisung_Block : public Anweisung
+{
+public:
+    Anweisung_Block(std::vector<Anweisung *> anweisungen);
+
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
+    std::vector<Anweisung *> anweisungen();
+
+private:
+    std::vector<Anweisung *> _anweisungen;
+};
+
+
 // }}}
 
 }

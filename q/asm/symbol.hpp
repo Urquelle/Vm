@@ -8,6 +8,8 @@
 
 namespace Asm {
 
+class Reich;
+
 class Symbol
 {
 public:
@@ -17,6 +19,7 @@ public:
         DATEN     = 2,
         SCHABLONE = 3,
         ANWEISUNG = 4,
+        MAKRO     = 5,
     };
 
     Symbol(Art art, std::string name);
@@ -26,9 +29,13 @@ public:
     Art art();
     std::string name();
 
+    void reich_setzen(Reich *reich);
+    Reich *reich();
+
 private:
     Art _art;
     std::string _name;
+    Reich *_reich;
 };
 
 class Symbol_Konstante : public Symbol
@@ -87,6 +94,15 @@ public:
 
 private:
     std::map<std::string, Feld *> _felder;
+};
+
+class Symbol_Makro : public Symbol
+{
+public:
+    Symbol_Makro(std::string name, Deklaration_Makro *dekl);
+
+private:
+    Deklaration_Makro *_dekl;
 };
 
 }

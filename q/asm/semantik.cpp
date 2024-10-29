@@ -2,7 +2,7 @@
 
 #include "vm/anweisung.hpp"
 
-#define Z_ANWEISUNG_OPCODE 1
+#define FEHLER_WENN(A, F) do { if (A) { melden(token()->pos(), F); } } while(0)
 
 namespace Asm {
 
@@ -24,6 +24,18 @@ Semantik::starten()
     return _ast;
 }
 
+Diagnostik
+Semantik::diagnostik()
+{
+    return _diagnostik;
+}
+
+void
+Semantik::melden(Position pos, Fehler *fehler)
+{
+    _diagnostik.melden(pos, fehler);
+}
+
 void
 Semantik::markierungen_registrieren()
 {
@@ -33,7 +45,7 @@ Semantik::markierungen_registrieren()
     {
         if (dekl->art() == Deklaration::SCHABLONE)
         {
-            auto *schablone = dekl->als<Schablone *>();
+            auto *schablone = dekl->als<Deklaration_Schablone *>();
 
             std::map<std::string , Symbol_Schablone::Feld *> felder;
             uint16_t versatz = 0;
@@ -43,23 +55,22 @@ Semantik::markierungen_registrieren()
 
                 if (felder.contains(feld->name()))
                 {
-                    assert(!"feld bereits vorhanden");
+                    melden(Position(), new Fehler(std::format("feld '{}' bereits vorhanden", feld->name())));
                 }
 
                 felder[feld->name()] = f;
-
                 versatz += feld->größe();
             }
 
             if (!symbol_registrieren(schablone->name(), new Symbol_Schablone(schablone->name(), felder)))
             {
-                assert(!"konnte symbol nicht registrieren");
+                melden(Position(), new Fehler(std::format("Schablone '{}' konnte nicht registriert werden", schablone->name())));
             }
         }
 
         else if (dekl->art() == Deklaration::DATEN)
         {
-            auto *daten = dekl->als<Daten *>();
+            auto *daten = dekl->als<Deklaration_Daten *>();
             daten->adresse = adresse;
             std::string name = daten->name();
 
@@ -73,7 +84,7 @@ Semantik::markierungen_registrieren()
 
         else if (dekl->art() == Deklaration::KONSTANTE)
         {
-            auto *konstante = dekl->als<Konstante *>();
+            auto *konstante = dekl->als<Deklaration_Konstante *>();
 
             uint16_t wert = konstante->wert();
             std::string name = konstante->name();
@@ -83,11 +94,30 @@ Semantik::markierungen_registrieren()
                 assert(!"konnte symbol nicht registrieren");
             }
         }
+
+        else if (dekl->art() == Deklaration::MAKRO)
+        {
+            auto *makro = dekl->als<Deklaration_Makro *>();
+            auto *sym = new Symbol_Makro(makro->name(), makro);
+
+            sym->reich_setzen(new Reich(makro->name(), &_reich));
+
+            if (!symbol_registrieren(makro->name(), sym))
+            {
+                assert(!"konnte makro nicht deklarieren");
+            }
+        }
     }
 
-    for (auto *anweisung : _ast.anweisungen)
+    for (auto *a : _ast.anweisungen)
     {
-        anweisung->adresse = adresse;
+        if (a->art() == Anweisung::BLOCK)
+        {
+            continue;
+        }
+
+        auto *anweisung = a->als<Anweisung_Asm *>();
+        anweisung->adresse_setzen(adresse);
 
         if (anweisung->markierung())
         {
@@ -103,76 +133,77 @@ Semantik::markierungen_registrieren()
 }
 
 void
-Semantik::anweisung_analysieren(Asm::Anweisung *anweisung)
+Semantik::anweisung_analysieren(Asm::Anweisung *a)
 {
-    assert(anweisung);
+    assert(a);
 
-    if (anweisung->op() == "mov" || anweisung->op() == "MOV")
+    if (a->art() == Anweisung::ASM)
     {
-        mov_analysieren(anweisung);
+        auto *anweisung = a->als<Anweisung_Asm *>();
+
+        if (anweisung->op() == "mov" || anweisung->op() == "MOV")
+        {
+            mov_analysieren(anweisung);
+        }
+        else if (anweisung->op() == "add" || anweisung->op() == "ADD")
+        {
+            add_analysieren(anweisung);
+        }
+        else if (anweisung->op() == "dec" || anweisung->op() == "DEC")
+        {
+            dec_analysieren(anweisung);
+        }
+        else if (anweisung->op() == "inc" || anweisung->op() == "INC")
+        {
+            inc_analysieren(anweisung);
+        }
+        else if (anweisung->op() == "jne" || anweisung->op() == "JNE")
+        {
+            jne_analysieren(anweisung);
+        }
+        else if (anweisung->op() == "hlt" || anweisung->op() == "HLT")
+        {
+            hlt_analysieren(anweisung);
+        }
+        else if (anweisung->op() == "rti" || anweisung->op() == "RTI")
+        {
+            rti_analysieren(anweisung);
+        }
+        else if (anweisung->op() == "brk" || anweisung->op() == "BRK")
+        {
+            brk_analysieren(anweisung);
+        }
+        else
+        {
+            assert(!"unbekannte anweisung");
+        }
     }
-    else if (anweisung->op() == "add" || anweisung->op() == "ADD")
-    {
-        add_analysieren(anweisung);
-    }
-    else if (anweisung->op() == "dec" || anweisung->op() == "DEC")
-    {
-        dec_analysieren(anweisung);
-    }
-    else if (anweisung->op() == "inc" || anweisung->op() == "INC")
-    {
-        inc_analysieren(anweisung);
-    }
-    else if (anweisung->op() == "jne" || anweisung->op() == "JNE")
-    {
-        jne_analysieren(anweisung);
-    }
-    else if (anweisung->op() == "hlt" || anweisung->op() == "HLT")
-    {
-        hlt_analysieren(anweisung);
-    }
-    else if (anweisung->op() == "rti" || anweisung->op() == "RTI")
-    {
-        rti_analysieren(anweisung);
-    }
-    else if (anweisung->op() == "brk" || anweisung->op() == "BRK")
-    {
-        brk_analysieren(anweisung);
-    }
-    else
-    {
-        assert(!"unbekannte anweisung");
-    }
+
 }
 
 bool
 Semantik::symbol_registrieren(std::string name, Symbol *symbol)
 {
-    if (_symbole.contains(name))
-    {
-        return false;
-    }
+    auto erg = _reich.registrieren(name, symbol);
 
-    _symbole[name] = symbol;
-
-    return true;
+    return erg;
 }
 
 Symbol *
 Semantik::symbol_holen(std::string name)
 {
-    auto *erg = _symbole[name];
+    auto erg = _reich.suchen(name);
 
-    if (erg == nullptr)
+    if (erg.schlecht())
     {
         assert(!"konnte symbol nicht finden");
     }
 
-    return erg;
+    return erg.wert();
 }
 
 void
-Semantik::add_analysieren(Asm::Anweisung *anweisung)
+Semantik::add_analysieren(Asm::Anweisung_Asm *anweisung)
 {
     using namespace Vm;
 
@@ -200,12 +231,12 @@ Semantik::add_analysieren(Asm::Anweisung *anweisung)
 
     if (erfolg)
     {
-        anweisung->anweisung_setzen(Vm::Anweisung::Add(op1, op2));
+        anweisung->vm_anweisung_setzen(Vm::Anweisung::Add(op1, op2));
     }
 }
 
 void
-Semantik::mov_analysieren(Asm::Anweisung *anweisung)
+Semantik::mov_analysieren(Asm::Anweisung_Asm *anweisung)
 {
     using namespace Vm;
 
@@ -262,13 +293,13 @@ Semantik::mov_analysieren(Asm::Anweisung *anweisung)
 
         if (erfolg)
         {
-            anweisung->anweisung_setzen(Vm::Anweisung::Mov(op1, op2));
+            anweisung->vm_anweisung_setzen(Vm::Anweisung::Mov(op1, op2));
         }
     }
 }
 
 void
-Semantik::dec_analysieren(Asm::Anweisung *anweisung)
+Semantik::dec_analysieren(Asm::Anweisung_Asm *anweisung)
 {
     using namespace Vm;
 
@@ -282,11 +313,11 @@ Semantik::dec_analysieren(Asm::Anweisung *anweisung)
 
     auto *op = operand_analysieren(operanden[0]);
 
-    anweisung->anweisung_setzen(Vm::Anweisung::Dec(op));
+    anweisung->vm_anweisung_setzen(Vm::Anweisung::Dec(op));
 }
 
 void
-Semantik::inc_analysieren(Asm::Anweisung *anweisung)
+Semantik::inc_analysieren(Asm::Anweisung_Asm *anweisung)
 {
     using namespace Vm;
 
@@ -300,11 +331,11 @@ Semantik::inc_analysieren(Asm::Anweisung *anweisung)
 
     auto *op = operand_analysieren(operanden[0]);
 
-    anweisung->anweisung_setzen(Vm::Anweisung::Inc(op));
+    anweisung->vm_anweisung_setzen(Vm::Anweisung::Inc(op));
 }
 
 void
-Semantik::jne_analysieren(Asm::Anweisung *anweisung)
+Semantik::jne_analysieren(Asm::Anweisung_Asm *anweisung)
 {
     using namespace Vm;
 
@@ -319,31 +350,31 @@ Semantik::jne_analysieren(Asm::Anweisung *anweisung)
     auto *op = operand_analysieren(operanden[0]);
     auto *ziel = operand_analysieren(operanden[1]);
 
-    anweisung->anweisung_setzen(Vm::Anweisung::Jne(op, ziel));
+    anweisung->vm_anweisung_setzen(Vm::Anweisung::Jne(op, ziel));
 }
 
 void
-Semantik::hlt_analysieren(Asm::Anweisung *anweisung)
+Semantik::hlt_analysieren(Asm::Anweisung_Asm *anweisung)
 {
     using namespace Vm;
 
-    anweisung->anweisung_setzen(Vm::Anweisung::Hlt());
+    anweisung->vm_anweisung_setzen(Vm::Anweisung::Hlt());
 }
 
 void
-Semantik::rti_analysieren(Asm::Anweisung *anweisung)
+Semantik::rti_analysieren(Asm::Anweisung_Asm *anweisung)
 {
     using namespace Vm;
 
-    anweisung->anweisung_setzen(Vm::Anweisung::Rti());
+    anweisung->vm_anweisung_setzen(Vm::Anweisung::Rti());
 }
 
 void
-Semantik::brk_analysieren(Asm::Anweisung *anweisung)
+Semantik::brk_analysieren(Asm::Anweisung_Asm *anweisung)
 {
     using namespace Vm;
 
-    anweisung->anweisung_setzen(Vm::Anweisung::Brk());
+    anweisung->vm_anweisung_setzen(Vm::Anweisung::Brk());
 }
 
 Vm::Operand *

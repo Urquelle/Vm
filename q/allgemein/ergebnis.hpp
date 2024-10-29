@@ -2,15 +2,15 @@
 
 #include "fehler.hpp"
 
-template <typename TWert>
+template <typename TWert, typename FWert = Fehler>
 class Ergebnis
 {
 public:
     Ergebnis(TWert wert);
-    Ergebnis(Fehler fehler);
+    Ergebnis(FWert fehler);
 
     TWert wert();
-    Fehler fehler();
+    FWert fehler();
 
     bool gut();
     bool schlecht();
@@ -19,5 +19,5 @@ private:
     bool _gut;
 
     TWert _wert;
-    Fehler _fehler;
+    FWert _fehler;
 };

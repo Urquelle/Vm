@@ -2,6 +2,7 @@
 #include "allgemein/position.cpp"
 #include "allgemein/ergebnis.cpp"
 #include "allgemein/fehler.cpp"
+#include "allgemein/diagnostik.cpp"
 #include "vm/laufwerk.cpp"
 #include "vm/arbeitsspeicher.cpp"
 #include "vm/vermittler.cpp"
@@ -13,6 +14,7 @@
 #include "asm/ast.cpp"
 #include "asm/syntax.cpp"
 #include "asm/symbol.cpp"
+#include "asm/reich.cpp"
 #include "asm/semantik.cpp"
 #include "asm/emitter.cpp"
 
@@ -52,19 +54,35 @@ int main(int argc, char **argv)
 #ifdef ASM_AST_AUSGEBEN
     for (auto knoten : ast.deklarationen)
     {
-        knoten->ausgeben(0);
+        knoten->ausgeben(0, std::cout);
         printf("\n");
     }
 
     for (auto knoten : ast.anweisungen)
     {
-        knoten->ausgeben(0);
+        knoten->ausgeben(0, std::cout);
         printf("\n");
     }
 #endif
 
+    if (syntax.diagnostik().hat_meldungen())
+    {
+        for (auto meldung : syntax.diagnostik().meldungen())
+        {
+             std::cout << meldung << std::endl;
+        }
+    }
+
     auto semantik = Semantik(ast);
     semantik.starten();
+
+    if (semantik.diagnostik().hat_meldungen())
+    {
+        for (auto meldung : semantik.diagnostik().meldungen())
+        {
+             std::cout << meldung << std::endl;
+        }
+    }
 
     auto speicher = new Vm::Arbeitsspeicher(256*256);
     auto emitter = Emitter(speicher, ast);

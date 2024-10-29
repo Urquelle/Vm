@@ -3,13 +3,19 @@
 #include <cassert>
 #include <cctype>
 
+#define FEHLER_WENN(A, F) do { if (A) { melden(token()->pos(), F); } } while(0)
+
 namespace Asm {
+
+Fehler * Syntax::Fehler_Name_Erwartet = new Fehler("gültigen bezeichner erwartet.");
+Fehler * Syntax::Fehler_Wert_Erwartet = new Fehler("gültigen zahlenwert erwartet.");
+Fehler * Syntax::Fehler_Token_Erwartet = new Fehler("'%d' erwartet, aber '%d' erhalten.");
 
 Syntax::Zeile
 Syntax::zeile_deklaration(Asm::Deklaration *dekl)
 {
     Zeile erg = {
-        .art = Syntax::Deklaration,
+        .art = Syntax::DEKLARATION,
         .daten = dekl
     };
 
@@ -20,7 +26,7 @@ Syntax::Zeile
 Syntax::zeile_anweisung(Asm::Anweisung *anweisung)
 {
     Zeile erg = {
-        .art = Syntax::Anweisung,
+        .art = Syntax::ANWEISUNG,
         .daten = anweisung
     };
 
@@ -43,11 +49,11 @@ Syntax::starten()
 
     while (zeile.daten != nullptr)
     {
-        if (zeile.art == Syntax::Deklaration)
+        if (zeile.art == Syntax::DEKLARATION)
         {
             erg.deklarationen.push_back((Asm::Deklaration *) zeile.daten);
         }
-        else if (zeile.art == Syntax::Anweisung)
+        else if (zeile.art == Syntax::ANWEISUNG)
         {
             erg.anweisungen.push_back((Asm::Anweisung *) zeile.daten);
         }
@@ -61,6 +67,18 @@ Syntax::starten()
     }
 
     return erg;
+}
+
+Diagnostik
+Syntax::diagnostik()
+{
+    return _diagnostik;
+}
+
+void
+Syntax::melden(Position pos, Fehler *fehler)
+{
+    _diagnostik.melden(pos, fehler);
 }
 
 Syntax::Zeile
@@ -86,15 +104,12 @@ Syntax::zeile_einlesen()
     {
         auto konst = weiter();
         auto *name = brauche<Name *>(Ausdruck::NAME);
+        FEHLER_WENN(name == nullptr, Syntax::Fehler_Name_Erwartet);
         erwarte(Token::GLEICH);
         auto *hex = brauche<Hex *>(Ausdruck::HEX);
+        FEHLER_WENN(hex == nullptr, Syntax::Fehler_Wert_Erwartet);
 
-        if (name == nullptr || hex == nullptr)
-        {
-            assert(!"name und wert müssen vorhanden sein.");
-        }
-
-        auto dekl = new Konstante(
+        auto dekl = new Deklaration_Konstante(
             name->name(),
             hex->wert(),
             exportieren);
@@ -106,6 +121,13 @@ Syntax::zeile_einlesen()
     else if (strcmp(token()->text(), "schablone") == 0)
     {
         auto *dekl = schablone_dekl_einlesen(exportieren);
+        Zeile erg = zeile_deklaration(dekl);
+
+        return erg;
+    }
+    else if (strcmp(token()->text(), "makro") == 0)
+    {
+        auto *dekl = makro_dekl_einlesen(exportieren);
         Zeile erg = zeile_deklaration(dekl);
 
         return erg;
@@ -130,40 +152,66 @@ Syntax::operand_einlesen()
 Asm::Anweisung *
 Syntax::anweisung_einlesen()
 {
-    Name *markierung = nullptr;
-    auto *anw = brauche<Name *>(Ausdruck::NAME);
-
-    if (anw == nullptr)
+    if (akzeptiere(Token::GESCHWEIFTE_KLAMMER_AUF))
     {
-        return nullptr;
-    }
+        std::vector<Anweisung *> anweisungen;
 
-    if (akzeptiere(Token::DOPPELPUNKT))
-    {
-        markierung = anw;
-        akzeptiere(Token::ZEILENUMBRUCH);
-        anw = brauche<Name *>(Ausdruck::NAME);
-    }
-
-    if (anw == nullptr)
-    {
-        return nullptr;
-    }
-
-    std::vector<Ausdruck *> operanden;
-    while (ungleich(Token::ZEILENUMBRUCH) && ungleich(Token::ENDE))
-    {
-        auto *operand = operand_einlesen();
-
-        if (operand != nullptr)
+        Anweisung *anweisung = nullptr;
+        while (ungleich(Token::GESCHWEIFTE_KLAMMER_ZU))
         {
-            operanden.push_back(operand);
+            akzeptiere(Token::ZEILENUMBRUCH);
+            anweisung = anweisung_einlesen();
+
+            if (anweisung == nullptr)
+            {
+                break;
+            }
+
+            anweisungen.push_back(anweisung);
         }
+
+        erwarte(Token::GESCHWEIFTE_KLAMMER_ZU);
+        akzeptiere(Token::ZEILENUMBRUCH);
+
+        return new Asm::Anweisung_Block(anweisungen);
     }
+    else
+    {
+        Name *markierung = nullptr;
+        auto *anw = brauche<Name *>(Ausdruck::NAME);
 
-    return new Asm::Anweisung(markierung, anw->name(), operanden);
+        if (anw == nullptr)
+        {
+            return nullptr;
+        }
+
+        if (akzeptiere(Token::DOPPELPUNKT))
+        {
+            markierung = anw;
+            akzeptiere(Token::ZEILENUMBRUCH);
+            anw = brauche<Name *>(Ausdruck::NAME);
+        }
+
+        if (anw == nullptr)
+        {
+            return nullptr;
+        }
+
+        std::vector<Ausdruck *> operanden;
+        while (ungleich(Token::ZEILENUMBRUCH) && ungleich(Token::ENDE))
+        {
+            auto *operand = operand_einlesen();
+
+            if (operand != nullptr)
+            {
+                operanden.push_back(operand);
+            }
+        }
+
+        return new Asm::Anweisung_Asm(markierung, anw->name(), operanden);
+    }
 }
-
+// ausdruck {{{
 Ausdruck *
 Syntax::ausdruck_einlesen()
 {
@@ -214,11 +262,7 @@ Syntax::basis_ausdruck_einlesen()
         {
             auto ausrufezeichen = weiter();
             auto *ausdruck = brauche<Name *>(Ausdruck::NAME);
-
-            if (ausdruck == nullptr)
-            {
-                assert(!"name erwartet.");
-            }
+            FEHLER_WENN(ausdruck == nullptr, Fehler_Name_Erwartet);
 
             return new Variable(ausdruck->name());
         } break;
@@ -310,11 +354,18 @@ Syntax::basis_ausdruck_einlesen()
 
             return new Klammer(ausdruck);
         } break;
+
+        case Token::GESCHWEIFTE_KLAMMER_AUF:
+        {
+            weiter();
+            erwarte(Token::GESCHWEIFTE_KLAMMER_ZU);
+        } break;
     }
 
     return nullptr;
 }
-
+// }}}
+// deklaration {{{
 Asm::Deklaration *
 Syntax::schablone_dekl_einlesen(bool exportieren)
 {
@@ -327,13 +378,13 @@ Syntax::schablone_dekl_einlesen(bool exportieren)
     erwarte(Token::GESCHWEIFTE_KLAMMER_AUF);
     akzeptiere(Token::ZEILENUMBRUCH);
 
-    std::vector<Schablone::Feld *> felder;
+    std::vector<Deklaration_Schablone::Feld *> felder;
     while (ungleich(Token::GESCHWEIFTE_KLAMMER_ZU))
     {
         auto *feldname = brauche<Name *>(Ausdruck::NAME);
         erwarte(Token::DOPPELPUNKT);
         auto *wert = brauche<Hex *>(Ausdruck::HEX);
-        felder.push_back(new Schablone::Feld(feldname->name(), wert->wert()));
+        felder.push_back(new Deklaration_Schablone::Feld(feldname->name(), wert->wert()));
 
         akzeptiere(Token::KOMMA);
         akzeptiere(Token::ZEILENUMBRUCH);
@@ -342,7 +393,35 @@ Syntax::schablone_dekl_einlesen(bool exportieren)
     erwarte(Token::GESCHWEIFTE_KLAMMER_ZU);
     akzeptiere(Token::ZEILENUMBRUCH);
 
-    erg = new Schablone(name->name(), felder);
+    erg = new Deklaration_Schablone(name->name(), felder);
+
+    return erg;
+}
+
+Asm::Deklaration *
+Syntax::makro_dekl_einlesen(bool exportieren)
+{
+    Asm::Deklaration *erg = nullptr;
+
+    weiter();
+    auto *name = brauche<Name *>(Ausdruck::NAME);
+
+    erwarte(Token::RUNDE_KLAMMER_AUF);
+    std::vector<Ausdruck *> parameter;
+    while (ungleich(Token::RUNDE_KLAMMER_ZU))
+    {
+        auto *parameter_name = brauche<Name *>(Ausdruck::NAME);
+        parameter.push_back(parameter_name);
+
+        akzeptiere(Token::KOMMA);
+        akzeptiere(Token::ZEILENUMBRUCH);
+    }
+
+    erwarte(Token::RUNDE_KLAMMER_ZU);
+    akzeptiere(Token::ZEILENUMBRUCH);
+
+    auto *rumpf = anweisung_einlesen();
+    erg = new Deklaration_Makro(name->name(), parameter, rumpf);
 
     return erg;
 }
@@ -365,12 +444,7 @@ Syntax::daten_dekl_einlesen(uint32_t größe, bool exportieren)
     while (ungleich(Token::GESCHWEIFTE_KLAMMER_ZU))
     {
         auto hex = brauche<Hex *>(Ausdruck::HEX);
-
-        if (hex == nullptr)
-        {
-            assert(!"hex ausdruck erwartet");
-        }
-
+        FEHLER_WENN(hex == nullptr, Fehler_Wert_Erwartet);
         daten.push_back(hex);
         akzeptiere(Token::KOMMA);
     }
@@ -380,11 +454,11 @@ Syntax::daten_dekl_einlesen(uint32_t größe, bool exportieren)
     // INFO: zeilenumbruch überspringen
     akzeptiere(Token::ZEILENUMBRUCH);
 
-    auto erg = new Daten(größe, name->name(), (uint16_t) daten.size(), daten, exportieren);
+    auto erg = new Deklaration_Daten(größe, name->name(), (uint16_t) daten.size(), daten, exportieren);
 
     return erg;
 }
-
+// }}}
 /* helfer {{{ */
 
 template<typename T> T
@@ -436,7 +510,7 @@ Syntax::erwarte(Token::Art art)
 {
     if (ungleich(art))
     {
-        assert(!"anderes token wurde erwartet.");
+        melden(token()->pos(), Fehler_Token_Erwartet);
     }
 
     return weiter();
