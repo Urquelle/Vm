@@ -8,6 +8,7 @@ namespace Asm {
 
 Semantik::Semantik(Ast ast)
     : _ast(ast)
+    , _zone(new Zone("Welt", nullptr))
 {
 }
 
@@ -100,7 +101,7 @@ Semantik::markierungen_registrieren()
             auto *makro = dekl->als<Deklaration_Makro *>();
             auto *sym = new Symbol_Makro(makro->name(), makro);
 
-            sym->reich_setzen(new Reich(makro->name(), &_reich));
+            sym->zone_setzen(new Zone(makro->name(), _zone));
 
             if (!symbol_registrieren(makro->name(), sym))
             {
@@ -184,7 +185,7 @@ Semantik::anweisung_analysieren(Asm::Anweisung *a)
 bool
 Semantik::symbol_registrieren(std::string name, Symbol *symbol)
 {
-    auto erg = _reich.registrieren(name, symbol);
+    auto erg = _zone->registrieren(name, symbol);
 
     return erg;
 }
@@ -192,7 +193,7 @@ Semantik::symbol_registrieren(std::string name, Symbol *symbol)
 Symbol *
 Semantik::symbol_holen(std::string name)
 {
-    auto erg = _reich.suchen(name);
+    auto erg = _zone->suchen(name);
 
     if (erg.schlecht())
     {

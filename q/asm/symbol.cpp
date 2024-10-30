@@ -5,20 +5,20 @@ namespace Asm {
 Symbol::Symbol(Art art, std::string name)
     : _art(art)
     , _name(name)
-    , _reich(nullptr)
+    , _zone(nullptr)
 {
 }
 
 void
-Symbol::reich_setzen(Reich *reich)
+Symbol::zone_setzen(Zone *zone)
 {
-    _reich = reich;
+    _zone = zone;
 }
 
-Reich *
-Symbol::reich()
+Zone *
+Symbol::zone()
 {
-    return _reich;
+    return _zone;
 }
 
 Symbol::Art

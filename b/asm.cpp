@@ -14,7 +14,7 @@
 #include "asm/ast.cpp"
 #include "asm/syntax.cpp"
 #include "asm/symbol.cpp"
-#include "asm/reich.cpp"
+#include "asm/zone.cpp"
 #include "asm/semantik.cpp"
 #include "asm/emitter.cpp"
 

@@ -6,7 +6,7 @@
 #include "allgemein/ergebnis.hpp"
 #include "allgemein/fehler.hpp"
 #include "asm/symbol.hpp"
-#include "asm/reich.hpp"
+#include "asm/zone.hpp"
 #include "vm/operand.hpp"
 
 namespace Asm {
@@ -39,7 +39,7 @@ public:
     void melden(Position pos, Fehler *fehler);
 
 private:
-    Reich _reich;
+    Zone *_zone;
     Ast _ast;
     Diagnostik _diagnostik;
 };

@@ -8,7 +8,7 @@
 
 namespace Asm {
 
-class Reich;
+class Zone;
 
 class Symbol
 {
@@ -29,13 +29,13 @@ public:
     Art art();
     std::string name();
 
-    void reich_setzen(Reich *reich);
-    Reich *reich();
+    void zone_setzen(Zone *zone);
+    Zone *zone();
 
 private:
     Art _art;
     std::string _name;
-    Reich *_reich;
+    Zone *_zone;
 };
 
 class Symbol_Konstante : public Symbol
