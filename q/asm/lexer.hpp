@@ -18,7 +18,7 @@ public:
     std::vector<Token *> starten();
 
 private:
-    Zeichen zeichen();
+    Zeichen zeichen(int16_t versatz = 0);
     Zeichen weiter(uint16_t z = 1);
     void leerzeichen_einlesen();
 

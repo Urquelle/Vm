@@ -15,11 +15,13 @@ class Symbol
 public:
     enum Art
     {
-        KONSTANTE = 1,
-        DATEN     = 2,
-        SCHABLONE = 3,
-        ANWEISUNG = 4,
-        MAKRO     = 5,
+        KONSTANTE   = 1,
+        DATEN       = 2,
+        SCHABLONE   = 3,
+        ANWEISUNG   = 4,
+        MAKRO       = 5,
+        PLATZHALTER = 6,
+        MARKIERUNG  = 7,
     };
 
     Symbol(Art art, std::string name);
@@ -101,9 +103,33 @@ class Symbol_Makro : public Symbol
 public:
     Symbol_Makro(std::string name, Deklaration_Makro *dekl);
 
+    std::vector<Name *> parameter();
+    Deklaration_Makro *dekl();
+
 private:
     Deklaration_Makro *_dekl;
 };
 
-}
+class Symbol_Platzhalter : public Symbol
+{
+public:
+    Symbol_Platzhalter(std::string name);
 
+    void ausdruck_setzen(Ausdruck *ausdruck);
+    Ausdruck *ausdruck();
+
+private:
+    Ausdruck *_ausdruck;
+};
+
+class Symbol_Markierung : public Symbol
+{
+public:
+    Symbol_Markierung(std::string name, uint16_t adresse);
+
+    uint16_t adresse();
+private:
+    uint16_t _adresse;
+};
+
+}

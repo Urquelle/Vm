@@ -34,6 +34,9 @@ public:
     Ast starten();
 
     Asm::Anweisung   * anweisung_einlesen();
+    Asm::Anweisung   * makro_anweisung_einlesen();
+    Asm::Anweisung   * markierung_anweisung_einlesen();
+    Asm::Anweisung   * asm_anweisung_einlesen();
     Asm::Deklaration * daten_dekl_einlesen(uint32_t z_daten, bool exportieren);
     Asm::Deklaration * schablone_dekl_einlesen(bool exportieren);
     Asm::Deklaration * makro_dekl_einlesen(bool exportieren);
@@ -46,7 +49,7 @@ public:
 
     template<typename T>
     T       brauche(Asm::Ausdruck::Art art);
-    Token * token();
+    Token * token(uint32_t versatz = 0);
     Token * weiter();
     Token * erwarte(Token::Art art);
     bool    akzeptiere(Token::Art art);
@@ -58,7 +61,7 @@ public:
     Zeile   zeile_anweisung(Asm::Anweisung *anw);
 
     Diagnostik diagnostik();
-    void melden(Position pos, Fehler *fehler);
+    void melden(Spanne spanne, Fehler *fehler);
 
 private:
     std::vector<Token *> _token;

@@ -14,6 +14,7 @@ public:
     Zone(std::string name, Zone *über = nullptr);
 
     Zone *über();
+    void über_setzen(Zone *über);
     std::string name();
     bool registriert(std::string name);
     bool registrieren(std::string name, Symbol *symbol);

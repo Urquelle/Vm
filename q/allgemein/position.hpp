@@ -7,16 +7,15 @@ class Position
 {
 public:
     Position();
-    Position(uint16_t index, std::string q);
+    Position(uint64_t index, std::string q);
 
-    uint16_t index() const;
+    uint64_t index() const;
     std::string q() const;
 
 private:
 
-    uint16_t _index;
+    uint64_t _index;
     std::string _q;
 };
 
-inline int16_t operator-(const Position& lhs, const Position& rhs);
-
+inline uint64_t operator-(const Position& lhs, const Position& rhs);

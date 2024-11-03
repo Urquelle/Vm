@@ -1,4 +1,5 @@
 #include "asm/lexer.hpp"
+
 #include <cctype>
 #include <cstdint>
 
@@ -49,8 +50,7 @@ Lexer::starten()
 
         if (z == '\0')
         {
-            weiter();
-            erg.push_back(Token::Eof(anfang));
+            erg.push_back(Token::Eof(Spanne(anfang, weiter())));
 
             break;
         }
@@ -63,72 +63,72 @@ Lexer::starten()
                 z = weiter();
             }
 
-            erg.push_back(Token::Zeilenumbruch(anfang));
+            erg.push_back(Token::Zeilenumbruch(Spanne(anfang, zeichen(-1))));
         }
         else if (z == '(')
         {
             weiter();
-            erg.push_back(Token::Runde_Klammer_Auf(anfang));
+            erg.push_back(Token::Runde_Klammer_Auf(Spanne(anfang, z)));
         }
         else if (z == ')')
         {
             weiter();
-            erg.push_back(Token::Runde_Klammer_Zu(anfang));
+            erg.push_back(Token::Runde_Klammer_Zu(Spanne(anfang, z)));
         }
         else if (z == '[')
         {
             weiter();
-            erg.push_back(Token::Eckige_Klammer_Auf(anfang));
+            erg.push_back(Token::Eckige_Klammer_Auf(Spanne(anfang, z)));
         }
         else if (z == ']')
         {
             weiter();
-            erg.push_back(Token::Eckige_Klammer_Zu(anfang));
+            erg.push_back(Token::Eckige_Klammer_Zu(Spanne(anfang, z)));
         }
         else if (z == '{')
         {
             weiter();
-            erg.push_back(Token::Geschweifte_Klammer_Auf(anfang));
+            erg.push_back(Token::Geschweifte_Klammer_Auf(Spanne(anfang, z)));
         }
         else if (z == '}')
         {
             weiter();
-            erg.push_back(Token::Geschweifte_Klammer_Zu(anfang));
+            erg.push_back(Token::Geschweifte_Klammer_Zu(Spanne(anfang, z)));
         }
         else if (z == '.')
         {
             weiter();
-            erg.push_back(Token::Punkt(anfang));
+            erg.push_back(Token::Punkt(Spanne(anfang, z)));
         }
         else if (z == ',')
         {
             weiter();
-            erg.push_back(Token::Komma(anfang));
+            erg.push_back(Token::Komma(Spanne(anfang, z)));
         }
         else if (z == '+')
         {
             weiter();
-            erg.push_back(Token::Plus(anfang));
+            erg.push_back(Token::Plus(Spanne(anfang, z)));
         }
         else if (z == '-')
         {
             weiter();
-            erg.push_back(Token::Minus(anfang));
+            erg.push_back(Token::Minus(Spanne(anfang, z)));
         }
         else if (z == '*')
         {
             weiter();
-            erg.push_back(Token::Stern(anfang));
+            erg.push_back(Token::Stern(Spanne(anfang, z)));
         }
         else if (z == '/')
         {
             weiter();
-            erg.push_back(Token::Pisa(anfang));
+            erg.push_back(Token::Pisa(Spanne(anfang, z)));
         }
         else if (z == '\\')
         {
             weiter();
-            erg.push_back(Token::Pisa_Links(anfang));
+            erg.push_back(Token::Pisa_Links(Spanne(anfang, z)));
         }
 
         // INFO: '$'
@@ -151,33 +151,33 @@ Lexer::starten()
                     z = weiter();
                 }
 
-                erg.push_back(Token::Hex(anfang, z, wert));
+                erg.push_back(Token::Hex(Spanne(anfang, zeichen(-1)), wert));
             }
             else
             {
                 // AUFGABE: Raute ist hier nicht mehr korrekt
-                erg.push_back(Token::Raute(anfang));
+                erg.push_back(Token::Raute(Spanne(anfang, z)));
             }
         }
         else if (z == '%')
         {
             weiter();
-            erg.push_back(Token::Prozent(anfang));
+            erg.push_back(Token::Prozent(Spanne(anfang, z)));
         }
         else if (z == '@')
         {
             weiter();
-            erg.push_back(Token::Klammeraffe(anfang));
+            erg.push_back(Token::Klammeraffe(Spanne(anfang, z)));
         }
         else if (z == '#')
         {
             weiter();
-            erg.push_back(Token::Raute(anfang));
+            erg.push_back(Token::Raute(Spanne(anfang, z)));
         }
         else if (z == ':')
         {
             weiter();
-            erg.push_back(Token::Doppelpunkt(anfang));
+            erg.push_back(Token::Doppelpunkt(Spanne(anfang, z)));
         }
         else if (z == ';')
         {
@@ -193,23 +193,23 @@ Lexer::starten()
             }
             else
             {
-                erg.push_back(Token::Semikolon(anfang));
+                erg.push_back(Token::Semikolon(Spanne(anfang, zeichen(-1))));
             }
         }
         else if (z == '!')
         {
             weiter();
-            erg.push_back(Token::Ausrufezeichen(anfang));
+            erg.push_back(Token::Ausrufezeichen(Spanne(anfang, z)));
         }
         else if (z == '&')
         {
             weiter();
-            erg.push_back(Token::Kaufmannsund(anfang));
+            erg.push_back(Token::Kaufmannsund(Spanne(anfang, z)));
         }
         else if (z == '|')
         {
             weiter();
-            erg.push_back(Token::Balken(anfang));
+            erg.push_back(Token::Balken(Spanne(anfang, z)));
         }
         else if (z == '>')
         {
@@ -218,11 +218,11 @@ Lexer::starten()
             if (z == '=')
             {
                 weiter();
-                erg.push_back(Token::Groesser_Gleich(anfang));
+                erg.push_back(Token::Groesser_Gleich(Spanne(anfang, z)));
             }
             else
             {
-                erg.push_back(Token::Groesser(anfang));
+                erg.push_back(Token::Groesser(Spanne(anfang, z)));
             }
         }
         else if (z == '<')
@@ -232,11 +232,11 @@ Lexer::starten()
             if (z == '=')
             {
                 weiter();
-                erg.push_back(Token::Kleiner_Gleich(anfang));
+                erg.push_back(Token::Kleiner_Gleich(Spanne(anfang, z)));
             }
             else
             {
-                erg.push_back(Token::Kleiner(anfang));
+                erg.push_back(Token::Kleiner(Spanne(anfang, z)));
             }
         }
         else if (z == '=')
@@ -246,11 +246,11 @@ Lexer::starten()
             if (z == '=')
             {
                 weiter();
-                erg.push_back(Token::Gleich_Gleich(anfang));
+                erg.push_back(Token::Gleich_Gleich(Spanne(anfang, z)));
             }
             else
             {
-                erg.push_back(Token::Gleich(anfang));
+                erg.push_back(Token::Gleich(Spanne(anfang, z)));
             }
         }
 
@@ -275,7 +275,7 @@ Lexer::starten()
                 weiter();
             }
 
-            erg.push_back(Token::Text(anfang, z));
+            erg.push_back(Token::Text(Spanne(anfang, z)));
         }
 
         // INFO: name
@@ -286,13 +286,13 @@ Lexer::starten()
                 z = weiter();
             }
 
-            erg.push_back(Token::Name(anfang, z));
+            erg.push_back(Token::Name(Spanne(anfang, zeichen(-1))));
         }
 
         // INFO: zahlen
         else if (std::isdigit(z.c()))
         {
-            uint32_t zahl = 0;
+            uint32_t wert = 0;
             while (z.c() >= '0' && z.c() <= '9' || z.c() >= 'a' && z.c() <= 'f' || z.c() >= 'A' && z.c() <= 'F')
             {
                 if (z == '_')
@@ -301,14 +301,13 @@ Lexer::starten()
                     continue;
                 }
 
-                zahl *= 16;
-                zahl += ziffern[z.c()];
+                wert *= 16;
+                wert += ziffern[z.c()];
 
                 z = weiter();
             }
 
-            printf("wert: %d, hex: 0x%04X\n", zahl, zahl);
-            erg.push_back(Token::Hex(anfang, z, zahl));
+            erg.push_back(Token::Hex(Spanne(anfang, z), wert));
 
  #if 0
             if (z == 'b')
@@ -351,14 +350,16 @@ Lexer::starten()
 }
 
 Zeichen
-Lexer::zeichen()
+Lexer::zeichen(int16_t versatz)
 {
-    if (_index >= _text.size())
+    int32_t  index = _index + versatz;
+
+    if (index >= _text.size() || index < 0)
     {
-        return Zeichen('\0', _index, _q, (char *)_text.c_str());
+        return Zeichen('\0', index, _q, _text);
     }
 
-    return Zeichen(_text[_index], _index, _q, (char *)_text.c_str());
+    return Zeichen(_text[index], index, _q, _text);
 }
 
 Zeichen

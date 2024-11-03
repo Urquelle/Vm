@@ -1,5 +1,6 @@
 #include "allgemein/zeichen.cpp"
 #include "allgemein/position.cpp"
+#include "allgemein/spanne.cpp"
 #include "allgemein/ergebnis.cpp"
 #include "allgemein/fehler.cpp"
 #include "allgemein/diagnostik.cpp"
@@ -52,6 +53,7 @@ int main(int argc, char **argv)
     auto ast = syntax.starten();
 
 #ifdef ASM_AST_AUSGEBEN
+    std::cout << "Nach Syntaktischer Analyse" << std::endl;
     for (auto knoten : ast.deklarationen)
     {
         knoten->ausgeben(0, std::cout);
@@ -74,7 +76,7 @@ int main(int argc, char **argv)
     }
 
     auto semantik = Semantik(ast);
-    semantik.starten();
+    ast = semantik.starten();
 
     if (semantik.diagnostik().hat_meldungen())
     {
@@ -83,6 +85,22 @@ int main(int argc, char **argv)
              std::cout << meldung << std::endl;
         }
     }
+
+#ifdef ASM_AST_AUSGEBEN
+    std::cout << "Nach Semantischer Analyse" << std::endl;
+
+    for (auto knoten : ast.deklarationen)
+    {
+        knoten->ausgeben(0, std::cout);
+        printf("\n");
+    }
+
+    for (auto knoten : ast.anweisungen)
+    {
+        knoten->ausgeben(0, std::cout);
+        printf("\n");
+    }
+#endif
 
     auto speicher = new Vm::Arbeitsspeicher(256*256);
     auto emitter = Emitter(speicher, ast);

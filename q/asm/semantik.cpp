@@ -2,7 +2,7 @@
 
 #include "vm/anweisung.hpp"
 
-#define FEHLER_WENN(A, F) do { if (A) { melden(token()->pos(), F); } } while(0)
+#define FEHLER_WENN(A, F) do { if (A) { melden(token()->spanne(), F); } } while(0)
 
 namespace Asm {
 
@@ -15,6 +15,8 @@ Semantik::Semantik(Ast ast)
 Ast
 Semantik::starten()
 {
+    makros_registrieren();
+    makros_erweitern();
     markierungen_registrieren();
 
     for (auto anweisung : _ast.anweisungen)
@@ -32,9 +34,151 @@ Semantik::diagnostik()
 }
 
 void
-Semantik::melden(Position pos, Fehler *fehler)
+Semantik::melden(Spanne spanne, Fehler *fehler)
 {
-    _diagnostik.melden(pos, fehler);
+    _diagnostik.melden(spanne, fehler);
+}
+
+void
+Semantik::melden(Anweisung *anweisung, Fehler *fehler)
+{
+    melden(anweisung->spanne(), fehler);
+}
+
+void
+Semantik::melden(Ausdruck *ausdruck, Fehler *fehler)
+{
+    melden(ausdruck->spanne(), fehler);
+}
+
+void
+Semantik::melden(Token *token, Fehler *fehler)
+{
+    melden(token->spanne(), fehler);
+}
+
+Zone *
+Semantik::zone()
+{
+    return _zone;
+}
+
+Zone *
+Semantik::zone_betreten(Zone *z)
+{
+    z->über_setzen(zone());
+    _zone = z;
+
+    return _zone->über();
+}
+
+void
+Semantik::zone_verlassen()
+{
+    _zone = _zone->über();
+}
+
+void
+Semantik::makros_registrieren()
+{
+    for (auto *dekl : _ast.deklarationen)
+    {
+        if (dekl->art() != Deklaration::MAKRO)
+        {
+            continue;
+        }
+
+        auto *makro_dekl = dekl->als<Deklaration_Makro *>();
+
+        auto *vorhandenes_symbol = symbol_holen(makro_dekl->name());
+        if (vorhandenes_symbol != nullptr)
+        {
+            melden(makro_dekl->spanne(), new Fehler(std::format("makro '{}' bereits vorhanden", makro_dekl->name())));
+        }
+
+        if (vorhandenes_symbol == nullptr)
+        {
+            auto *sym = new Symbol_Makro(makro_dekl->name(), makro_dekl);
+            sym->zone_setzen(new Zone(makro_dekl->name(), _zone));
+
+            if (!symbol_registrieren(makro_dekl->name(), sym))
+            {
+                melden(makro_dekl->spanne(), new Fehler(std::format("makro '{}' konnte nicht registriert werden.", makro_dekl->name())));
+            }
+
+            // INFO: makro parameter in zone registrieren
+            for (auto *param : makro_dekl->parameter())
+            {
+                if (sym->zone()->registriert(param->name()))
+                {
+                    melden(param, new Fehler(std::format("das makro {} enthält bereits einen parameter {}",
+                        makro_dekl->name(), param->name())));
+                }
+
+                auto *param_sym = new Symbol_Platzhalter(param->name());
+                if (!sym->zone()->registrieren(param->name(), param_sym))
+                {
+                    melden(param, new Fehler("konnte symbol nicht registrieren"));
+                }
+            }
+        }
+    }
+}
+
+void
+Semantik::makros_erweitern()
+{
+    std::list<Anweisung *> anweisungen;
+
+    for (auto *a : _ast.anweisungen)
+    {
+        if (a->art() == Anweisung::MAKRO)
+        {
+            auto *anweisung = a->als<Anweisung_Makro *>();
+            auto *sym = symbol_holen(anweisung->name());
+
+            if (sym == nullptr)
+            {
+                melden(a, new Fehler(std::format("unbekanntes makro {}", anweisung->name())));
+            }
+
+            auto *sym_makro = sym->als<Symbol_Makro *>();
+
+            // INFO: anzahl der argumente, muss gleich der anzahl der parameter sein.
+            if (anweisung->argumente().size() != sym_makro->parameter().size())
+            {
+                melden(anweisung, new Fehler(
+                    std::format("anzahl der argumente ({}) entspricht nicht der anzahl der parameter ({})",
+                                anweisung->argumente().size(), sym_makro->parameter().size())));
+            }
+
+            // INFO: argumente an die entsprechenden parameter des makros binden, und
+            //       die makroangaben auflösen
+            for (int32_t i = 0; i < sym_makro->parameter().size(); ++i)
+            {
+                auto *param = sym_makro->parameter()[i];
+                auto *sym_param = sym_makro->zone()->symbol(param->name());
+
+                sym_param->als<Symbol_Platzhalter *>()->ausdruck_setzen(anweisung->argumente()[i]);
+            }
+
+            zone_betreten(sym_makro->zone());
+
+            for (auto *makro_anweisung : sym_makro->dekl()->rumpf())
+            {
+                auto *kopie = anweisung_kopieren(makro_anweisung);
+                anweisungen.push_back(anweisung_analysieren(kopie));
+            }
+
+            zone_verlassen();
+        }
+        else
+        {
+            anweisungen.push_back(a);
+        }
+    }
+
+    _ast.anweisungen = anweisungen;
 }
 
 void
@@ -52,12 +196,12 @@ Semantik::markierungen_registrieren()
             uint16_t versatz = 0;
             for (auto *feld : schablone->felder())
             {
-                auto *f = new Symbol_Schablone::Feld(versatz, feld->größe());
-
                 if (felder.contains(feld->name()))
                 {
-                    melden(Position(), new Fehler(std::format("feld '{}' bereits vorhanden", feld->name())));
+                    melden(feld->spanne(), new Fehler(std::format("feld '{}' bereits vorhanden", feld->name())));
                 }
+
+                auto *f = new Symbol_Schablone::Feld(versatz, feld->größe());
 
                 felder[feld->name()] = f;
                 versatz += feld->größe();
@@ -65,7 +209,7 @@ Semantik::markierungen_registrieren()
 
             if (!symbol_registrieren(schablone->name(), new Symbol_Schablone(schablone->name(), felder)))
             {
-                melden(Position(), new Fehler(std::format("Schablone '{}' konnte nicht registriert werden", schablone->name())));
+                melden(schablone->spanne(), new Fehler(std::format("Schablone '{}' konnte nicht registriert werden", schablone->name())));
             }
         }
 
@@ -98,42 +242,42 @@ Semantik::markierungen_registrieren()
 
         else if (dekl->art() == Deklaration::MAKRO)
         {
-            auto *makro = dekl->als<Deklaration_Makro *>();
-            auto *sym = new Symbol_Makro(makro->name(), makro);
-
-            sym->zone_setzen(new Zone(makro->name(), _zone));
-
-            if (!symbol_registrieren(makro->name(), sym))
-            {
-                assert(!"konnte makro nicht deklarieren");
-            }
+            // INFO: makros wurden bereits in makros_registrieren behandelt
         }
     }
 
     for (auto *a : _ast.anweisungen)
     {
-        if (a->art() == Anweisung::BLOCK)
+        if (a->art() == Anweisung::ASM)
         {
-            continue;
+            auto *anweisung = a->als<Anweisung_Asm *>();
+            anweisung->adresse_setzen(adresse);
+            adresse += anweisung->größe();
         }
 
-        auto *anweisung = a->als<Anweisung_Asm *>();
-        anweisung->adresse_setzen(adresse);
-
-        if (anweisung->markierung())
+        else if (a->art() == Anweisung::MAKRO)
         {
-            std::string markierung = anweisung->markierung()->als<Name *>()->name();
-            if (!symbol_registrieren(markierung, new Symbol_Anweisung(markierung, adresse)))
+            assert(!"nicht implementiert");
+
+            // AUFGABE: a) als allererstes die makros durchgehen
+            //          und als symbol registrieren. dann alle anweisungen durchgehen, die makros aufrufen und diese durch
+            //          den makrorumpf ersetzen?
+            //          b) makros auflösen und ast analysieren, und in einer zusätzlichen phase die adressen berechnen
+        }
+
+        else if (a->art() == Anweisung::MARKIERUNG)
+        {
+            auto *markierung = a->als<Anweisung_Markierung *>();
+            markierung->adresse_setzen(adresse);
+            if (!symbol_registrieren(markierung->name(), new Symbol_Markierung(markierung->name(), adresse)))
             {
-                assert(!"konnte symbol nicht registrieren");
+                //
             }
         }
-
-        adresse += anweisung->größe();
     }
 }
 
-void
+Anweisung *
 Semantik::anweisung_analysieren(Asm::Anweisung *a)
 {
     assert(a);
@@ -144,48 +288,103 @@ Semantik::anweisung_analysieren(Asm::Anweisung *a)
 
         if (anweisung->op() == "mov" || anweisung->op() == "MOV")
         {
-            mov_analysieren(anweisung);
+            return mov_analysieren(anweisung);
         }
         else if (anweisung->op() == "add" || anweisung->op() == "ADD")
         {
-            add_analysieren(anweisung);
+            return add_analysieren(anweisung);
         }
         else if (anweisung->op() == "dec" || anweisung->op() == "DEC")
         {
-            dec_analysieren(anweisung);
+            return dec_analysieren(anweisung);
         }
         else if (anweisung->op() == "inc" || anweisung->op() == "INC")
         {
-            inc_analysieren(anweisung);
+            return inc_analysieren(anweisung);
         }
         else if (anweisung->op() == "jne" || anweisung->op() == "JNE")
         {
-            jne_analysieren(anweisung);
+            return jne_analysieren(anweisung);
         }
         else if (anweisung->op() == "hlt" || anweisung->op() == "HLT")
         {
-            hlt_analysieren(anweisung);
+            return hlt_analysieren(anweisung);
         }
         else if (anweisung->op() == "rti" || anweisung->op() == "RTI")
         {
-            rti_analysieren(anweisung);
+            return rti_analysieren(anweisung);
         }
         else if (anweisung->op() == "brk" || anweisung->op() == "BRK")
         {
-            brk_analysieren(anweisung);
+            return brk_analysieren(anweisung);
         }
         else
         {
             assert(!"unbekannte anweisung");
+            return nullptr;
         }
     }
+    else if (a->art() == Anweisung::MARKIERUNG)
+    {
+        // INFO: markierungen wurden bereits in markierungen_registrieren behandelt
+    }
+    else if (a->art() == Anweisung::MAKRO)
+    {
+        // INFO: makro anweisungen wurde bereits in makros_erweitern behandelt
+    }
+    else
+    {
+        assert(!"wie sind wir hergekommen?");
+    }
 
+    return nullptr;
+}
+
+Anweisung *
+Semantik::anweisung_kopieren(Anweisung *anweisung)
+{
+    switch (anweisung->art())
+    {
+        case Anweisung::ASM:
+        {
+            auto *a = anweisung->als<Anweisung_Asm *>();
+
+            std::vector<Ausdruck *> operanden;
+            for (int32_t i = 0; i < a->operanden().size(); ++i)
+            {
+                auto *operand = a->operanden()[i];
+
+                if (operand->art() == Ausdruck::NAME)
+                {
+                    Symbol *sym = symbol_holen(operand->als<Name *>()->name());
+                    assert(sym->art() == Symbol::PLATZHALTER);
+                    operanden.push_back(sym->als<Symbol_Platzhalter *>()->ausdruck());
+                }
+                else
+                {
+                    operanden.push_back(operand);
+                }
+            }
+
+            return new Anweisung_Asm(a->spanne(), a->op(), operanden);
+        } break;
+
+        default: return anweisung;
+    }
 }
 
 bool
 Semantik::symbol_registrieren(std::string name, Symbol *symbol)
 {
     auto erg = _zone->registrieren(name, symbol);
+
+    return erg;
+}
+
+bool
+Semantik::symbol_registriert(std::string name)
+{
+    bool erg = _zone->registriert(name);
 
     return erg;
 }
@@ -197,13 +396,13 @@ Semantik::symbol_holen(std::string name)
 
     if (erg.schlecht())
     {
-        assert(!"konnte symbol nicht finden");
+        return nullptr;
     }
 
     return erg.wert();
 }
 
-void
+Anweisung *
 Semantik::add_analysieren(Asm::Anweisung_Asm *anweisung)
 {
     using namespace Vm;
@@ -233,10 +432,14 @@ Semantik::add_analysieren(Asm::Anweisung_Asm *anweisung)
     if (erfolg)
     {
         anweisung->vm_anweisung_setzen(Vm::Anweisung::Add(op1, op2));
+
+        return anweisung;
     }
+
+    return nullptr;
 }
 
-void
+Anweisung *
 Semantik::mov_analysieren(Asm::Anweisung_Asm *anweisung)
 {
     using namespace Vm;
@@ -296,10 +499,18 @@ Semantik::mov_analysieren(Asm::Anweisung_Asm *anweisung)
         {
             anweisung->vm_anweisung_setzen(Vm::Anweisung::Mov(op1, op2));
         }
+
+        return anweisung;
     }
+    else if (anzahl_operanden == 3)
+    {
+        assert(!"3 operanden für mov");
+    }
+
+    return nullptr;
 }
 
-void
+Anweisung *
 Semantik::dec_analysieren(Asm::Anweisung_Asm *anweisung)
 {
     using namespace Vm;
@@ -315,9 +526,11 @@ Semantik::dec_analysieren(Asm::Anweisung_Asm *anweisung)
     auto *op = operand_analysieren(operanden[0]);
 
     anweisung->vm_anweisung_setzen(Vm::Anweisung::Dec(op));
+
+    return anweisung;
 }
 
-void
+Anweisung *
 Semantik::inc_analysieren(Asm::Anweisung_Asm *anweisung)
 {
     using namespace Vm;
@@ -333,9 +546,11 @@ Semantik::inc_analysieren(Asm::Anweisung_Asm *anweisung)
     auto *op = operand_analysieren(operanden[0]);
 
     anweisung->vm_anweisung_setzen(Vm::Anweisung::Inc(op));
+
+    return anweisung;
 }
 
-void
+Anweisung *
 Semantik::jne_analysieren(Asm::Anweisung_Asm *anweisung)
 {
     using namespace Vm;
@@ -352,30 +567,38 @@ Semantik::jne_analysieren(Asm::Anweisung_Asm *anweisung)
     auto *ziel = operand_analysieren(operanden[1]);
 
     anweisung->vm_anweisung_setzen(Vm::Anweisung::Jne(op, ziel));
+
+    return anweisung;
 }
 
-void
+Anweisung *
 Semantik::hlt_analysieren(Asm::Anweisung_Asm *anweisung)
 {
     using namespace Vm;
 
     anweisung->vm_anweisung_setzen(Vm::Anweisung::Hlt());
+
+    return anweisung;
 }
 
-void
+Anweisung *
 Semantik::rti_analysieren(Asm::Anweisung_Asm *anweisung)
 {
     using namespace Vm;
 
     anweisung->vm_anweisung_setzen(Vm::Anweisung::Rti());
+
+    return anweisung;
 }
 
-void
+Anweisung *
 Semantik::brk_analysieren(Asm::Anweisung_Asm *anweisung)
 {
     using namespace Vm;
 
     anweisung->vm_anweisung_setzen(Vm::Anweisung::Brk());
+
+    return anweisung;
 }
 
 Vm::Operand *
@@ -387,6 +610,7 @@ Semantik::operand_analysieren(Ausdruck *op)
     {
         return Operand::Reg(op->als<Reg *>()->reg());
     }
+
     else if (op->art() == Ausdruck::HEX)
     {
         auto wert = op->als<Hex *>()->wert();
@@ -420,6 +644,16 @@ Semantik::operand_analysieren(Ausdruck *op)
         }
     }
 
+    else if (op->art() == Ausdruck::NAME)
+    {
+        auto *name = op->als<Name *>();
+        auto *sym = symbol_holen(name->name());
+
+        auto *erg = operand_analysieren(sym->als<Symbol_Platzhalter *>()->ausdruck());
+
+        return erg;
+    }
+
     else
     {
         assert(!"unbekannter operand");
@@ -448,6 +682,10 @@ Semantik::ausdruck_auswerten(Ausdruck *ausdruck)
             else if (sym->art() == Symbol::DATEN)
             {
                 erg = sym->als<Symbol_Daten *>()->adresse();
+            }
+            else if ( sym->art() == Symbol::MARKIERUNG)
+            {
+                erg = sym->als<Symbol_Markierung *>()->adresse();
             }
             else if (sym->art() == Symbol::ANWEISUNG)
             {

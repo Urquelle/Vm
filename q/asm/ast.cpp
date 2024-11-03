@@ -1,6 +1,8 @@
 #include "asm/ast.hpp"
 
+#include "ast.hpp"
 #include "vm/cpu.hpp"
+#include <string>
 
 char * Ast_Namen(Asm::Deklaration::Art art);
 char * Ast_Namen(Asm::Ausdruck::Art art);
@@ -12,17 +14,24 @@ uint32_t Register_Id(const char * name);
 namespace Asm {
 
 // deklaration {{{
-Deklaration::Deklaration(Deklaration::Art art, std::string name, bool exportieren)
+Deklaration::Deklaration(Deklaration::Art art, Spanne spanne, std::string name, bool exportieren)
     : _art(art)
+    , _spanne(spanne)
     , _name(name)
     , _exportieren(exportieren)
 {
 }
 
 Deklaration::Art
-Deklaration::art()
+Deklaration::art() const
 {
     return _art;
+}
+
+Spanne
+Deklaration::spanne() const
+{
+    return _spanne;
 }
 
 std::string
@@ -43,8 +52,8 @@ T Deklaration::als()
     return static_cast<T> (this);
 }
 
-Deklaration_Konstante::Deklaration_Konstante(std::string name, uint16_t wert, bool exportieren)
-    : Deklaration(Deklaration::KONSTANTE, name, exportieren)
+Deklaration_Konstante::Deklaration_Konstante(Spanne spanne, std::string name, uint16_t wert, bool exportieren)
+    : Deklaration(Deklaration::KONSTANTE, spanne, name, exportieren)
     , _wert(wert)
 {
 }
@@ -58,9 +67,9 @@ Deklaration_Konstante::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
     /*_wert->ausgeben(tiefe+1);*/
 }
 
-Deklaration_Daten::Deklaration_Daten(uint16_t größe, std::string name, uint16_t anzahl, std::vector<Hex *> daten,
-                     bool exportieren)
-    : Deklaration(Deklaration::DATEN, name, exportieren)
+Deklaration_Daten::Deklaration_Daten(Spanne spanne, uint16_t größe, std::string name,
+                                     uint16_t anzahl, std::vector<Hex *> daten, bool exportieren)
+    : Deklaration(Deklaration::DATEN, spanne, name, exportieren)
     , _größe(größe)
     , _anzahl(anzahl)
     , _daten(daten)
@@ -107,8 +116,9 @@ Deklaration_Daten::daten()
     return _daten;
 }
 
-Deklaration_Schablone::Deklaration_Schablone(std::string name, std::vector<Deklaration_Schablone::Feld *> felder)
-    : Deklaration(Deklaration::SCHABLONE, name)
+Deklaration_Schablone::Deklaration_Schablone(Spanne spanne, std::string name,
+                                             std::vector<Deklaration_Schablone::Feld *> felder)
+    : Deklaration(Deklaration::SCHABLONE, spanne, name)
     , _felder(felder)
 {
 }
@@ -125,20 +135,21 @@ Deklaration_Schablone::felder()
     return _felder;
 }
 
-Deklaration_Makro::Deklaration_Makro(std::string name, std::vector<Ausdruck *> parameter, Anweisung *rumpf)
-    : Deklaration(Deklaration::MAKRO, name)
+Deklaration_Makro::Deklaration_Makro(Spanne spanne, std::string name,
+        std::vector<Name *> parameter, std::vector<Anweisung *> rumpf)
+    : Deklaration(Deklaration::MAKRO, spanne, name)
     , _parameter(parameter)
     , _rumpf(rumpf)
 {
 }
 
-std::vector<Ausdruck *>
+std::vector<Name *>
 Deklaration_Makro::parameter()
 {
     return _parameter;
 }
 
-Anweisung *
+std::vector<Anweisung *>
 Deklaration_Makro::rumpf()
 {
     return _rumpf;
@@ -148,7 +159,7 @@ void
 Deklaration_Makro::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
     Einschub_Ausgeben(tiefe, ausgabe);
-    ausgabe << Ast_Namen(art()) << std::endl;
+    ausgabe << Ast_Namen(art()) << ": " << name() << std::endl;
 
     Einschub_Ausgeben(tiefe, ausgabe);
     ausgabe << "Parameter" << std::endl;
@@ -159,14 +170,24 @@ Deklaration_Makro::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 
     Einschub_Ausgeben(tiefe, ausgabe);
     ausgabe << "Rumpf" << std::endl;
-    _rumpf->ausgeben(tiefe + 1, ausgabe);
+
+    for (auto *anweisung : _rumpf)
+    {
+        anweisung->ausgeben(tiefe + 1, ausgabe);
+    }
 }
 // }}}
 // ausdruck {{{
 Ausdruck::Art
-Ausdruck::art()
+Ausdruck::art() const
 {
     return _art;
+}
+
+Spanne
+Ausdruck::spanne() const
+{
+    return _spanne;
 }
 
 bool
@@ -191,8 +212,8 @@ T Ausdruck::als()
     return static_cast<T> (this);
 }
 
-Als::Als(std::string schablone, std::string basis, std::string feld)
-    : Ausdruck(Ausdruck::ALS)
+Als::Als(Spanne spanne, std::string schablone, std::string basis, std::string feld)
+    : Ausdruck(Ausdruck::ALS, spanne)
     , _schablone(schablone)
     , _basis(basis)
     , _feld(feld)
@@ -204,6 +225,14 @@ Als::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
     Einschub_Ausgeben(tiefe, ausgabe);
     ausgabe << Ast_Namen(art()) << std::endl;
+}
+
+Ausdruck *
+Als::kopie()
+{
+    Als *erg = new Als(spanne(), _schablone, _basis, _feld);
+
+    return erg;
 }
 
 std::string
@@ -224,8 +253,8 @@ Als::feld()
     return _feld;
 }
 
-Bin::Bin(Token *op, Ausdruck *links, Ausdruck *rechts)
-    : Ausdruck(Ausdruck::BIN)
+Bin::Bin(Spanne spanne, Token *op, Ausdruck *links, Ausdruck *rechts)
+    : Ausdruck(Ausdruck::BIN, spanne)
     , _op(op)
     , _links(links)
     , _rechts(rechts)
@@ -244,8 +273,16 @@ Bin::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
     ausgabe << std::endl;
 }
 
-Name::Name(std::string name)
-    : Ausdruck(Ausdruck::NAME)
+Ausdruck *
+Bin::kopie()
+{
+    Bin *erg = new Bin(spanne(), _op, _links->kopie(), _rechts->kopie());
+
+    return erg;
+}
+
+Name::Name(Spanne spanne, std::string name)
+    : Ausdruck(Ausdruck::NAME, spanne)
     , _name(name)
 {
 }
@@ -257,14 +294,22 @@ Name::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
     ausgabe << Ast_Namen(art()) << ": " << _name << std::endl;
 }
 
+Ausdruck *
+Name::kopie()
+{
+    Name *erg = new Name(spanne(), _name);
+
+    return erg;
+}
+
 std::string
 Name::name()
 {
     return _name;
 }
 
-Reg::Reg(std::string name)
-    : Ausdruck(Ausdruck::REG)
+Reg::Reg(Spanne spanne, std::string name)
+    : Ausdruck(Ausdruck::REG, spanne)
     , _name(name)
 {
 }
@@ -276,6 +321,14 @@ Reg::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
     ausgabe << Ast_Namen(art()) << ": " << _name << std::endl;
 }
 
+Ausdruck *
+Reg::kopie()
+{
+    Reg *erg = new Reg(spanne(), _name);
+
+    return erg;
+}
+
 uint32_t
 Reg::reg()
 {
@@ -284,8 +337,8 @@ Reg::reg()
     return erg;
 }
 
-Text::Text(std::string text)
-    : Ausdruck(Ausdruck::TEXT)
+Text::Text(Spanne spanne, std::string text)
+    : Ausdruck(Ausdruck::TEXT, spanne)
     , _text(text)
 {
 }
@@ -295,6 +348,14 @@ Text::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
     Einschub_Ausgeben(tiefe, ausgabe);
     ausgabe << Ast_Namen(art()) << ": " << _text << std::endl;
+}
+
+Ausdruck *
+Text::kopie()
+{
+    Text *erg = new Text(spanne(), _text);
+
+    return erg;
 }
 
 #if 0
@@ -320,8 +381,8 @@ Ganzzahl::wert()
 }
 #endif
 
-Klammer::Klammer(Ausdruck *ausdruck)
-    : Ausdruck(Ausdruck::KLAMMER)
+Klammer::Klammer(Spanne spanne, Ausdruck *ausdruck)
+    : Ausdruck(Ausdruck::KLAMMER, spanne)
     , _ausdruck(ausdruck)
 {
 }
@@ -341,8 +402,16 @@ Klammer::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
     ausgabe << std::endl;
 }
 
-Adresse::Adresse(Ausdruck *ausdruck)
-    : Ausdruck(Ausdruck::ADRESSE)
+Ausdruck *
+Klammer::kopie()
+{
+    Klammer *erg = new Klammer(spanne(), _ausdruck->kopie());
+
+    return erg;
+}
+
+Adresse::Adresse(Spanne spanne, Ausdruck *ausdruck)
+    : Ausdruck(Ausdruck::ADRESSE, spanne)
     , _ausdruck(ausdruck)
 {
 }
@@ -356,13 +425,21 @@ Adresse::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 }
 
 Ausdruck *
+Adresse::kopie()
+{
+    Adresse *erg = new Adresse(spanne(), _ausdruck->kopie());
+
+    return erg;
+}
+
+Ausdruck *
 Adresse::ausdruck()
 {
     return _ausdruck;
 }
 
-Auswertung::Auswertung(Ausdruck *ausdruck)
-    : Ausdruck(Ausdruck::AUSWERTUNG)
+Auswertung::Auswertung(Spanne spanne, Ausdruck *ausdruck)
+    : Ausdruck(Ausdruck::AUSWERTUNG, spanne)
     , _ausdruck(ausdruck)
 {
 }
@@ -376,13 +453,21 @@ Auswertung::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 }
 
 Ausdruck *
+Auswertung::kopie()
+{
+    Auswertung *erg = new Auswertung(spanne(), _ausdruck->kopie());
+
+    return erg;
+}
+
+Ausdruck *
 Auswertung::ausdruck()
 {
     return _ausdruck;
 }
 
-Variable::Variable(std::string name)
-    : Ausdruck(Ausdruck::VARIABLE)
+Variable::Variable(Spanne spanne, std::string name)
+    : Ausdruck(Ausdruck::VARIABLE, spanne)
     , _name(name)
 {
 }
@@ -394,14 +479,22 @@ Variable::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
     ausgabe << Ast_Namen(art()) << ": " << _name << std::endl;
 }
 
+Ausdruck *
+Variable::kopie()
+{
+    Variable *erg = new Variable(spanne(), _name);
+
+    return erg;
+}
+
 std::string
 Variable::name()
 {
     return _name;
 }
 
-Hex::Hex(uint16_t wert)
-    : Ausdruck(Ausdruck::HEX)
+Hex::Hex(Spanne spanne, uint16_t wert)
+    : Ausdruck(Ausdruck::HEX, spanne)
     , _wert(wert)
 {
 }
@@ -419,42 +512,33 @@ Hex::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
     ausgabe << Ast_Namen(art()) << " " << std::format("{:#06x}", wert()) << std::endl;
 }
 
-Block::Block(std::vector<Anweisung *> anweisungen)
-    : Ausdruck(Ausdruck::BLOCK)
-    , _anweisungen(anweisungen)
+Ausdruck *
+Hex::kopie()
 {
-}
+    Hex *erg = new Hex(spanne(), _wert);
 
-std::vector<Anweisung *>
-Block::anweisungen()
-{
-    return _anweisungen;
-}
-
-void
-Block::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
-{
-    Einschub_Ausgeben(tiefe, ausgabe);
-    ausgabe << Ast_Namen(art()) << std::endl;
-
-    for (auto *anweisung : _anweisungen)
-    {
-        anweisung->ausgeben(tiefe + 1, ausgabe);
-    }
+    return erg;
 }
 // }}}
 // anweisung {{{
-Anweisung::Anweisung(Anweisung::Art art)
+Anweisung::Anweisung(Anweisung::Art art, Spanne spanne)
     : _art(art)
+    , _spanne(spanne)
     , _adresse(0)
     , _vm_anweisung(nullptr)
 {
 }
 
 Anweisung::Art
-Anweisung::art()
+Anweisung::art() const
 {
     return _art;
+}
+
+Spanne
+Anweisung::spanne() const
+{
+    return _spanne;
 }
 
 Vm::Anweisung *
@@ -487,23 +571,31 @@ T Anweisung::als()
     return static_cast<T> (this);
 }
 
-Anweisung_Asm::Anweisung_Asm(Name *markierung, std::string op, std::vector<Ausdruck *> operanden)
-    : Anweisung(Anweisung::ASM)
-    , _markierung(markierung)
+Anweisung_Asm::Anweisung_Asm(Spanne spanne, std::string op, std::vector<Ausdruck *> operanden)
+    : Anweisung(Anweisung::ASM, spanne)
     , _op(op)
     , _operanden(operanden)
 {
 }
 
+Anweisung *
+Anweisung_Asm::kopie()
+{
+    std::vector<Ausdruck *> ops;
+
+    for (auto *operand : operanden())
+    {
+        ops.push_back(operand->kopie());
+    }
+
+    Anweisung_Asm *erg = new Anweisung_Asm(spanne(), op(), ops);
+
+    return erg;
+}
+
 void
 Anweisung_Asm::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
-    if (_markierung)
-    {
-        Einschub_Ausgeben(tiefe, ausgabe);
-        _markierung->ausgeben(tiefe, ausgabe);
-    }
-
     Einschub_Ausgeben(tiefe, ausgabe);
     ausgabe << _op << std::endl;
 
@@ -560,29 +652,79 @@ Anweisung_Asm::operanden()
     return _operanden;
 }
 
-Name *
-Anweisung_Asm::markierung()
+Anweisung_Makro::Anweisung_Makro(Spanne spanne, std::string name, std::vector<Ausdruck *> argumente)
+    : Anweisung(Anweisung::MAKRO, spanne)
+    , _name(name)
+    , _argumente(argumente)
 {
-    return _markierung;
-}
-
-Anweisung_Block::Anweisung_Block(std::vector<Anweisung *> anweisungen)
-    : Anweisung(Anweisung::BLOCK)
-    , _anweisungen(anweisungen)
-{
-}
-
-std::vector<Anweisung *>
-Anweisung_Block::anweisungen()
-{
-    return _anweisungen;
 }
 
 void
-Anweisung_Block::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
+Anweisung_Makro::ausgeben(uint8_t tiefe, std::ostream& ausgabe)
 {
     Einschub_Ausgeben(tiefe, ausgabe);
-    ausgabe << Ast_Namen(art()) << std::endl;
+    ausgabe << Ast_Namen(art()) << ": " << _name << std::endl;
+    Einschub_Ausgeben(tiefe+1, ausgabe);
+    ausgabe << "Operanden" << std::endl;
+
+    for (auto *argument : _argumente)
+    {
+        argument->ausgeben(tiefe+2, ausgabe);
+    }
+}
+
+Anweisung *
+Anweisung_Makro::kopie()
+{
+    std::vector<Ausdruck *> argumente;
+
+    for (auto *argument : _argumente)
+    {
+        argumente.push_back(argument->kopie());
+    }
+
+    Anweisung_Makro *erg = new Anweisung_Makro(spanne(), _name, argumente);
+
+    return erg;
+}
+
+std::string
+Anweisung_Makro::name() const
+{
+    return _name;
+}
+
+std::vector<Ausdruck *>
+Anweisung_Makro::argumente()
+{
+    return _argumente;
+}
+
+Anweisung_Markierung::Anweisung_Markierung(Spanne spanne, std::string name)
+    : Anweisung(Anweisung::MARKIERUNG, spanne)
+    , _name(name)
+{
+}
+
+void
+Anweisung_Markierung::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
+{
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << ": " << _name;
+}
+
+Anweisung *
+Anweisung_Markierung::kopie()
+{
+    Anweisung_Markierung *erg = new Anweisung_Markierung(spanne(), _name);
+
+    return erg;
+}
+
+std::string
+Anweisung_Markierung::name()
+{
+    return _name;
 }
 // }}}
 

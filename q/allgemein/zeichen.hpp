@@ -8,16 +8,18 @@
 class Zeichen
 {
 public:
-    Zeichen(char c, uint16_t index, std::string q, char *text);
-    Zeichen(Zeichen &z);
+    Zeichen();
+    Zeichen(const Zeichen& z);
+    Zeichen(char c, uint16_t index, std::string& q, std::string& text);
 
-    Position pos();
-    char * text();
+    Position pos() const;
+    std::string text() const;
+    char * zgr() const;
     char c() const;
 
 private:
     char _c;
-    char *_text;
+    std::string _text;
     Position _position;
 };
 

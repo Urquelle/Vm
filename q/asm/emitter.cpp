@@ -56,9 +56,12 @@ Emitter::deklaration_emittieren(Asm::Deklaration *dekl)
 void
 Emitter::anweisung_emittieren(Asm::Anweisung *anweisung)
 {
-    auto *vm_anweisung = anweisung->vm_anweisung();
-    assert(vm_anweisung != nullptr);
-    vm_anweisung->kodieren(_laufwerk, anweisung->adresse());
+    if (anweisung->art() == Anweisung::ASM)
+    {
+        auto *vm_anweisung = anweisung->vm_anweisung();
+        assert(vm_anweisung != nullptr);
+        vm_anweisung->kodieren(_laufwerk, anweisung->adresse());
+    }
 }
 
 }

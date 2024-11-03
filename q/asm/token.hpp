@@ -53,64 +53,65 @@ public:
         #undef X
     };
 
-    static Token * Eof(Zeichen z);
-    static Token * Name(Zeichen anfang, Zeichen ende);
-    static Token * Text(Zeichen anfang, Zeichen ende);
-    static Token * Ganzzahl(Zeichen anfang, Zeichen ende, uint32_t zahl, uint16_t basis = 10);
-    static Token * Hex(Zeichen anfang, Zeichen ende, uint16_t zahl);
-    static Token * Runde_Klammer_Auf(Zeichen z);
-    static Token * Runde_Klammer_Zu(Zeichen z);
-    static Token * Eckige_Klammer_Auf(Zeichen z);
-    static Token * Eckige_Klammer_Zu(Zeichen z);
-    static Token * Geschweifte_Klammer_Auf(Zeichen z);
-    static Token * Geschweifte_Klammer_Zu(Zeichen z);
-    static Token * Gleich(Zeichen z);
-    static Token * Groesser(Zeichen z);
-    static Token * Groesser_Gleich(Zeichen z);
-    static Token * Gleich_Gleich(Zeichen z);
-    static Token * Kleiner_Gleich(Zeichen z);
-    static Token * Kleiner(Zeichen z);
-    static Token * Punkt(Zeichen z);
-    static Token * Komma(Zeichen z);
-    static Token * Plus(Zeichen z);
-    static Token * Minus(Zeichen z);
-    static Token * Stern(Zeichen z);
-    static Token * Pisa(Zeichen z);
-    static Token * Pisa_Links(Zeichen z);
-    static Token * Raute(Zeichen z);
-    static Token * Prozent(Zeichen z);
-    static Token * Klammeraffe(Zeichen z);
-    static Token * Doppelpunkt(Zeichen z);
-    static Token * Semikolon(Zeichen z);
-    static Token * Ausrufezeichen(Zeichen z);
-    static Token * Kaufmannsund(Zeichen z);
-    static Token * Balken(Zeichen z);
-    static Token * Zeilenumbruch(Zeichen z);
+    static Token * Eof(Spanne spanne);
+    static Token * Name(Spanne spanne);
+    static Token * Text(Spanne spanne);
+    static Token * Ganzzahl(Spanne spanne, uint32_t zahl, uint16_t basis = 10);
+    static Token * Hex(Spanne spanne, uint16_t wert);
+    static Token * Runde_Klammer_Auf(Spanne spanne);
+    static Token * Runde_Klammer_Zu(Spanne spanne);
+    static Token * Eckige_Klammer_Auf(Spanne spanne);
+    static Token * Eckige_Klammer_Zu(Spanne spanne);
+    static Token * Geschweifte_Klammer_Auf(Spanne spanne);
+    static Token * Geschweifte_Klammer_Zu(Spanne spanne);
+    static Token * Gleich(Spanne spanne);
+    static Token * Groesser(Spanne spanne);
+    static Token * Groesser_Gleich(Spanne spanne);
+    static Token * Gleich_Gleich(Spanne spanne);
+    static Token * Kleiner_Gleich(Spanne spanne);
+    static Token * Kleiner(Spanne spanne);
+    static Token * Punkt(Spanne spanne);
+    static Token * Komma(Spanne spanne);
+    static Token * Plus(Spanne spanne);
+    static Token * Minus(Spanne spanne);
+    static Token * Stern(Spanne spanne);
+    static Token * Pisa(Spanne spanne);
+    static Token * Pisa_Links(Spanne spanne);
+    static Token * Raute(Spanne spanne);
+    static Token * Prozent(Spanne spanne);
+    static Token * Klammeraffe(Spanne spanne);
+    static Token * Doppelpunkt(Spanne spanne);
+    static Token * Semikolon(Spanne spanne);
+    static Token * Ausrufezeichen(Spanne spanne);
+    static Token * Kaufmannsund(Spanne spanne);
+    static Token * Balken(Spanne spanne);
+    static Token * Zeilenumbruch(Spanne spanne);
 
-    Art art();
-    Position pos();
-    uint16_t laenge();
+    Art art() const;
+    Spanne spanne() const;
+    Position pos() const;
+    uint16_t länge() const;
     char * text();
 
-    virtual void ausgeben();
+    virtual void ausgeben(std::ostream &ausgabe);
 
     template<typename T> T als();
 
 protected:
-    Token(Art art, Zeichen z, Position anfang, uint16_t laenge);
+    Token(Art art, Spanne spanne);
 
     Art _art;
+    Spanne _spanne;
     Position _position;
-    uint16_t _laenge;
     char *_text;
 };
 
 class Token_Ganzzahl : public Token
 {
 public:
-    Token_Ganzzahl(Zeichen anfang, Zeichen ende, uint32_t zahl, uint16_t basis = 10);
+    Token_Ganzzahl(Spanne spanne, uint32_t zahl, uint16_t basis = 10);
 
-    virtual void ausgeben();
+    virtual void ausgeben(std::ostream &ausgabe);
 
     uint32_t zahl();
     uint16_t basis();
@@ -123,14 +124,14 @@ private:
 class Token_Hex : public Token
 {
 public:
-    Token_Hex(Zeichen anfang, Zeichen ende, uint16_t zahl);
+    Token_Hex(Spanne spanne, uint16_t wert);
 
-    virtual void ausgeben();
+    virtual void ausgeben(std::ostream &ausgabe);
 
-    uint16_t zahl();
+    uint16_t wert();
 
 private:
-    uint16_t _zahl;
+    uint16_t _wert;
 };
 
 char * Token_Namen(uint16_t token_id);

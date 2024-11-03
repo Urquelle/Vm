@@ -1,4 +1,5 @@
 #include "asm/symbol.hpp"
+#include "symbol.hpp"
 
 namespace Asm {
 
@@ -91,6 +92,46 @@ Symbol_Makro::Symbol_Makro(std::string name, Deklaration_Makro *dekl)
     : Symbol(Symbol::MAKRO, name)
     , _dekl(dekl)
 {
+}
+
+Deklaration_Makro *
+Symbol_Makro::dekl()
+{
+    return _dekl;
+}
+
+std::vector<Name *>
+Symbol_Makro::parameter()
+{
+    return _dekl->parameter();
+}
+
+Symbol_Platzhalter::Symbol_Platzhalter(std::string name)
+    : Symbol(Symbol::PLATZHALTER, name)
+{
+}
+
+void
+Symbol_Platzhalter::ausdruck_setzen(Ausdruck *ausdruck)
+{
+    _ausdruck = ausdruck;
+}
+
+Ausdruck *
+Symbol_Platzhalter::ausdruck()
+{
+    return _ausdruck;
+}
+
+Symbol_Markierung::Symbol_Markierung(std::string name, uint16_t adresse)
+    : Symbol(Symbol::MARKIERUNG, name)
+{
+}
+
+uint16_t
+Symbol_Markierung::adresse()
+{
+    return _adresse;
 }
 
 }

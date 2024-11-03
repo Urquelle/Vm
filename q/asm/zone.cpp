@@ -26,12 +26,23 @@ Zone::über()
     return _über;
 }
 
+void
+Zone::über_setzen(Zone *über)
+{
+    if (über == this)
+    {
+        return;
+    }
+
+    _über = über;
+}
+
 bool
 Zone::registriert(std::string name)
 {
-    auto erg = _symbole.contains(name);
+    auto *erg = _symbole[name];
 
-    return erg;
+    return (erg != nullptr);
 }
 
 bool
@@ -76,4 +87,3 @@ Zone::suchen(std::string name)
 }
 
 }
-

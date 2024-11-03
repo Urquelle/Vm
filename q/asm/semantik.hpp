@@ -18,25 +18,39 @@ public:
 
     Ast starten();
 
+    void makros_registrieren();
+    void makros_erweitern();
     void markierungen_registrieren();
+
     bool symbol_registrieren(std::string name, Symbol *symbol);
+    bool symbol_registriert(std::string name);
     Symbol *symbol_holen(std::string name);
 
-    void anweisung_analysieren(Asm::Anweisung *anweisung);
-    void mov_analysieren(Asm::Anweisung_Asm *anweisung);
-    void add_analysieren(Asm::Anweisung_Asm *anweisung);
-    void dec_analysieren(Asm::Anweisung_Asm *anweisung);
-    void inc_analysieren(Asm::Anweisung_Asm *anweisung);
-    void jne_analysieren(Asm::Anweisung_Asm *anweisung);
-    void hlt_analysieren(Asm::Anweisung_Asm *anweisung);
-    void rti_analysieren(Asm::Anweisung_Asm *anweisung);
-    void brk_analysieren(Asm::Anweisung_Asm *anweisung);
+    Anweisung * anweisung_analysieren(Asm::Anweisung *anweisung);
+    Anweisung * anweisung_kopieren(Asm::Anweisung *anweisung);
+
+    Anweisung * mov_analysieren(Asm::Anweisung_Asm *anweisung);
+    Anweisung * add_analysieren(Asm::Anweisung_Asm *anweisung);
+    Anweisung * dec_analysieren(Asm::Anweisung_Asm *anweisung);
+    Anweisung * inc_analysieren(Asm::Anweisung_Asm *anweisung);
+    Anweisung * jne_analysieren(Asm::Anweisung_Asm *anweisung);
+    Anweisung * hlt_analysieren(Asm::Anweisung_Asm *anweisung);
+    Anweisung * rti_analysieren(Asm::Anweisung_Asm *anweisung);
+    Anweisung * brk_analysieren(Asm::Anweisung_Asm *anweisung);
 
     Vm::Operand * operand_analysieren(Ausdruck *op);
+
     uint16_t ausdruck_auswerten(Ausdruck *ausdruck);
 
     Diagnostik diagnostik();
-    void melden(Position pos, Fehler *fehler);
+    void melden(Spanne spanne, Fehler *fehler);
+    void melden(Anweisung *anweisung, Fehler *fehler);
+    void melden(Ausdruck *ausdruck, Fehler *fehler);
+    void melden(Token *token, Fehler *fehler);
+
+    Zone *zone();
+    Zone *zone_betreten(Zone *zone);
+    void zone_verlassen();
 
 private:
     Zone *_zone;

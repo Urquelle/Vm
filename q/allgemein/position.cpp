@@ -6,13 +6,13 @@ Position::Position()
 {
 }
 
-Position::Position(uint16_t index, std::string q)
+Position::Position(uint64_t index, std::string q)
     : _index(index)
     , _q(q)
 {
 }
 
-uint16_t
+uint64_t
 Position::index() const
 {
     return _index;
@@ -24,9 +24,9 @@ Position::q() const
     return _q;
 }
 
-inline int16_t operator-(const Position& lhs, const Position& rhs)
+inline uint64_t operator-(const Position& lhs, const Position& rhs)
 {
-    int16_t erg = lhs.index() - rhs.index();
+    uint64_t erg = lhs.index() - rhs.index();
 
     return erg;
 }

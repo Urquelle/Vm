@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <list>
 #include <string.h>
 
 #include "vm/anweisung.hpp"
@@ -11,11 +12,12 @@ class Anweisung;
 class Ausdruck;
 class Deklaration;
 class Hex;
+class Name;
 
 struct Ast
 {
-    std::vector<Deklaration *> deklarationen;
-    std::vector<Anweisung *> anweisungen;
+    std::list<Deklaration *> deklarationen;
+    std::list<Anweisung *> anweisungen;
 };
 
 // deklarationen {{{
@@ -35,25 +37,27 @@ public:
         #undef X
     };
 
-    Deklaration(Deklaration::Art art, std::string name, bool exportieren = false);
+    Deklaration(Deklaration::Art art, Spanne spanne, std::string name, bool exportieren = false);
 
     virtual void ausgeben(uint8_t tiefe, std::ostream &ausgabe) = 0;
     template<typename T> T als();
 
-    Art art();
+    Art art() const;
+    Spanne spanne() const;
     std::string name();
     bool exportieren();
 
 private:
     bool _exportieren;
     Art _art;
+    Spanne _spanne;
     std::string _name;
 };
 
 class Deklaration_Konstante : public Deklaration
 {
 public:
-    Deklaration_Konstante(std::string name, uint16_t wert, bool exportieren);
+    Deklaration_Konstante(Spanne spanne, std::string name, uint16_t wert, bool exportieren);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
 
@@ -66,7 +70,7 @@ private:
 class Deklaration_Daten : public Deklaration
 {
 public:
-    Deklaration_Daten(uint16_t größe, std::string name, uint16_t anzahl, std::vector<Hex *> daten, bool exportieren);
+    Deklaration_Daten(Spanne spanne, uint16_t größe, std::string name, uint16_t anzahl, std::vector<Hex *> daten, bool exportieren);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
 
@@ -89,17 +93,20 @@ public:
     class Feld
     {
     public:
-        Feld(std::string name, uint16_t größe) : _name(name), _größe(größe) {}
+        Feld(Spanne spanne, std::string name, uint16_t größe)
+        : _spanne(spanne), _name(name), _größe(größe) {}
 
+        Spanne spanne() const { return _spanne; }
         std::string name() { return _name; }
         uint16_t größe() { return _größe; }
 
     private:
+        Spanne _spanne;
         std::string _name;
         uint16_t _größe;
     };
 
-    Deklaration_Schablone(std::string name, std::vector<Feld *> felder);
+    Deklaration_Schablone(Spanne spanne, std::string name, std::vector<Feld *> felder);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     std::vector<Feld *> felder();
@@ -111,15 +118,15 @@ private:
 class Deklaration_Makro : public Deklaration
 {
 public:
-    Deklaration_Makro(std::string name, std::vector<Ausdruck *> parameter, Anweisung *rumpf);
+    Deklaration_Makro(Spanne spanne, std::string name, std::vector<Name *> parameter, std::vector<Anweisung *> rumpf);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
-    std::vector<Ausdruck *> parameter();
-    Anweisung *rumpf();
+    std::vector<Name *> parameter();
+    std::vector<Anweisung *> rumpf();
 
 private:
-    std::vector<Ausdruck *> _parameter;
-    Anweisung *_rumpf;
+    std::vector<Name *> _parameter;
+    std::vector<Anweisung *> _rumpf;
 };
 // }}}
 // ausdruck {{{
@@ -146,28 +153,33 @@ public:
         #undef X
     };
 
-    Ausdruck(Art art)
+    Ausdruck(Art art, Spanne spanne)
         : _art(art)
+        , _spanne(spanne)
     {
     }
 
     virtual void ausgeben(uint8_t tiefe, std::ostream &ausgabe) = 0;
+    virtual Ausdruck *kopie() = 0;
     template<typename T> T als();
 
-    Art art();
+    Art art() const;
+    Spanne spanne() const;
     bool ungleich(Art art);
     bool gleich(Art art);
 
 private:
     Art _art;
+    Spanne _spanne;
 };
 
 class Bin : public Ausdruck
 {
 public:
-    Bin(Token *op, Ausdruck *links, Ausdruck *rechts);
+    Bin(Spanne spanne, Token *op, Ausdruck *links, Ausdruck *rechts);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
+    Ausdruck *kopie() override;
 
     Token *op() { return _op; }
     Ausdruck *links()  { return _links;  }
@@ -182,9 +194,10 @@ private:
 class Name : public Ausdruck
 {
 public:
-    Name(std::string name);
+    Name(Spanne spanne, std::string name);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
+    Ausdruck *kopie() override;
 
     std::string name();
 
@@ -195,9 +208,10 @@ private:
 class Auswertung : public Ausdruck
 {
 public:
-    Auswertung(Ausdruck *ausdruck);
+    Auswertung(Spanne spanne, Ausdruck *ausdruck);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
+    Ausdruck *kopie() override;
 
     Ausdruck * ausdruck();
 
@@ -208,9 +222,10 @@ private:
 class Reg : public Ausdruck
 {
 public:
-    Reg(std::string name);
+    Reg(Spanne spanne, std::string name);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
+    Ausdruck *kopie() override;
 
     uint32_t reg();
     std::string name();
@@ -222,9 +237,10 @@ private:
 class Adresse : public Ausdruck
 {
 public:
-    Adresse(Ausdruck *ausdruck);
+    Adresse(Spanne spanne, Ausdruck *ausdruck);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
+    Ausdruck *kopie() override;
     Ausdruck *ausdruck();
 
 private:
@@ -234,9 +250,10 @@ private:
 class Hex : public Ausdruck
 {
 public:
-    Hex(uint16_t wert);
+    Hex(Spanne spanne, uint16_t wert);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
+    Ausdruck *kopie() override;
 
     uint16_t wert();
 
@@ -247,9 +264,10 @@ private:
 class Text : public Ausdruck
 {
 public:
-    Text(std::string text);
+    Text(Spanne spanne, std::string text);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
+    Ausdruck *kopie() override;
 
 private:
     std::string _text;
@@ -258,9 +276,10 @@ private:
 class Variable : public Ausdruck
 {
 public:
-    Variable(std::string name);
+    Variable(Spanne spanne, std::string name);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
+    Ausdruck *kopie() override;
     std::string name();
 
 private:
@@ -270,9 +289,10 @@ private:
 class Klammer : public Ausdruck
 {
 public:
-    Klammer(Ausdruck *ausdruck);
+    Klammer(Spanne spanne, Ausdruck *ausdruck);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
+    Ausdruck *kopie() override;
 
     Ausdruck *ausdruck();
 
@@ -283,8 +303,10 @@ private:
 class Als : public Ausdruck
 {
 public:
-    Als(std::string schablone, std::string basis, std::string feld);
+    Als(Spanne spanne, std::string schablone, std::string basis, std::string feld);
+
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
+    Ausdruck *kopie() override;
 
     std::string schablone();
     std::string basis();
@@ -295,23 +317,12 @@ private:
     std::string _basis;
     std::string _feld;
 };
-
-class Block : public Ausdruck
-{
-public:
-    Block(std::vector<Anweisung *> anweisungen);
-
-    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
-    std::vector<Anweisung *> anweisungen();
-
-private:
-    std::vector<Anweisung *> _anweisungen;
-};
 // }}}
 // anweisung {{{
 #define Anweisung_Art \
-    X(ASM, 1, "Asm") \
-    X(BLOCK, 2, "Block")
+    X(ASM,        1, "Asm") \
+    X(MAKRO,      2, "Makro") \
+    X(MARKIERUNG, 3, "Markierung")
 
 class Anweisung
 {
@@ -323,9 +334,11 @@ public:
     #undef X
     };
 
-    Anweisung(Art art);
+    Anweisung(Art art, Spanne spanne);
 
     virtual void ausgeben(uint8_t tiefe, std::ostream &ausgabe) = 0;
+    virtual Anweisung *kopie() = 0;
+
     template<typename T> T als();
 
     Vm::Anweisung *vm_anweisung();
@@ -334,10 +347,12 @@ public:
     void adresse_setzen(uint16_t adresse);
     uint16_t adresse();
 
-    Art art();
+    Art art() const;
+    Spanne spanne() const;
 
 private:
     Art _art;
+    Spanne _spanne;
     uint16_t _adresse;
     Vm::Anweisung *_vm_anweisung;
 };
@@ -345,35 +360,50 @@ private:
 class Anweisung_Asm : public Anweisung
 {
 public:
-    Anweisung_Asm(Name *markierung, std::string op, std::vector<Ausdruck *> operanden);
+    Anweisung_Asm(Spanne spanne, std::string op, std::vector<Ausdruck *> operanden);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
+    Anweisung *kopie() override;
 
     std::string op();
     std::vector<Ausdruck *> operanden();
-    Name *markierung();
 
     uint32_t größe();
 
 private:
-    Name *_markierung;
     std::string _op;
     std::vector<Ausdruck *> _operanden;
 };
 
-class Anweisung_Block : public Anweisung
+class Anweisung_Makro : public Anweisung
 {
 public:
-    Anweisung_Block(std::vector<Anweisung *> anweisungen);
+    Anweisung_Makro(Spanne spanne, std::string name, std::vector<Ausdruck *> operanden);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
-    std::vector<Anweisung *> anweisungen();
+    Anweisung *kopie() override;
+
+    std::string name() const;
+    std::vector<Ausdruck *> argumente();
 
 private:
-    std::vector<Anweisung *> _anweisungen;
+    std::string _name;
+    std::vector<Ausdruck *> _argumente;
 };
 
+class Anweisung_Markierung : public Anweisung
+{
+public:
+    Anweisung_Markierung(Spanne spanne, std::string name);
 
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
+    Anweisung *kopie() override;
+
+    std::string name();
+
+private:
+    std::string _name;
+};
 // }}}
 
 }

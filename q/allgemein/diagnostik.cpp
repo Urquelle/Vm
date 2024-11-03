@@ -21,10 +21,10 @@ Diagnostik::melden(Diagnostik::Meldung meldung)
 }
 
 void
-Diagnostik::melden(Position position, Fehler *fehler)
+Diagnostik::melden(Spanne spanne, Fehler *fehler)
 {
     _meldungen.push_back({
-        .position = position,
+        .spanne = spanne,
         .fehler = fehler
     });
 }
@@ -37,7 +37,9 @@ Diagnostik::meldungen()
 
 std::ostream& operator<<(std::ostream& ausgabe, const Diagnostik::Meldung& m)
 {
-    ausgabe << "index: " << m.position.index() << " in " << m.position.q() << "Fehler: " << m.fehler->text << std::endl;
+    ausgabe << m.spanne.von().pos().q();
+    ausgabe << " index: " << m.spanne.von().pos().index();
+    ausgabe << " fehler: " << m.fehler->text << std::endl;
 
     return ausgabe;
 }

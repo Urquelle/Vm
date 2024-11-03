@@ -2,32 +2,41 @@
 
 namespace Asm {
 
-Token::Token(Token::Art art, Zeichen z, Position anfang, uint16_t laenge)
+
+Token::Token(Art art, Spanne spanne)
     : _art(art)
-    , _position(anfang)
-    , _laenge(laenge)
+    , _spanne(spanne)
 {
-    _text = new char[laenge + 1];
-    memcpy(_text, z.text() + _position.index(), _laenge);
-    _text[_laenge] = 0;
+    _text = new char[_spanne.länge() + 1];
+
+    char *anfang = _spanne.anfang();
+    memcpy(_text, anfang, _spanne.länge());
+
+    _text[_spanne.länge()] = 0;
 }
 
 Token::Art
-Token::art()
+Token::art() const
 {
     return _art;
 }
 
 Position
-Token::pos()
+Token::pos() const
 {
     return _position;
 }
 
-uint16_t
-Token::laenge()
+Spanne
+Token::spanne() const
 {
-    return _laenge;
+    return _spanne;
+}
+
+uint16_t
+Token::länge() const
+{
+    return _spanne.länge();
 }
 
 char *
@@ -37,9 +46,9 @@ Token::text()
 }
 
 void
-Token::ausgeben()
+Token::ausgeben(std::ostream &ausgabe)
 {
-    printf("%s", Token_Namen(_art));
+    ausgabe << Token_Namen(_art);
 }
 
 template<typename T>
@@ -49,271 +58,271 @@ T Token::als()
 }
 
 Token *
-Token::Eof(Zeichen z)
+Token::Eof(Spanne spanne)
 {
-    auto erg = new Token(Token::ENDE, z, z.pos(), 1);
+    auto erg = new Token(Token::ENDE, spanne);
 
     return erg;
 }
 
 Token *
-Token::Text(Zeichen anfang, Zeichen ende)
+Token::Text(Spanne spanne)
 {
-    auto erg = new Token(Token::TEXT, anfang, anfang.pos(), ende.pos() - anfang.pos());
+    auto erg = new Token(Token::TEXT, spanne);
 
     return erg;
 }
 
 Token *
-Token::Name(Zeichen anfang, Zeichen ende)
+Token::Name(Spanne spanne)
 {
-    auto erg = new Token(Token::NAME, anfang, anfang.pos(), ende.pos() - anfang.pos());
+    auto erg = new Token(Token::NAME, spanne);
 
     return erg;
 }
 
 Token *
-Token::Ganzzahl(Zeichen anfang, Zeichen ende, uint32_t zahl, uint16_t basis)
+Token::Ganzzahl(Spanne spanne, uint32_t zahl, uint16_t basis)
 {
-    auto erg = new Token_Ganzzahl(anfang, ende, zahl, basis);
+    auto erg = new Token_Ganzzahl(spanne, zahl, basis);
 
     return erg;
 }
 
 Token *
-Token::Hex(Zeichen anfang, Zeichen ende, uint16_t zahl)
+Token::Hex(Spanne spanne, uint16_t wert)
 {
-    auto erg = new Token_Hex(anfang, ende, zahl);
+    auto erg = new Token_Hex(spanne, wert);
 
     return erg;
 }
 
 Token *
-Token::Runde_Klammer_Auf(Zeichen z)
+Token::Runde_Klammer_Auf(Spanne spanne)
 {
-    auto erg = new Token(Token::RUNDE_KLAMMER_AUF, z, z.pos(), 1);
+    auto erg = new Token(Token::RUNDE_KLAMMER_AUF, spanne);
 
     return erg;
 }
 
 Token *
-Token::Runde_Klammer_Zu(Zeichen z)
+Token::Runde_Klammer_Zu(Spanne spanne)
 {
-    auto erg = new Token(Token::RUNDE_KLAMMER_ZU, z, z.pos(), 1);
+    auto erg = new Token(Token::RUNDE_KLAMMER_ZU, spanne);
 
     return erg;
 }
 
 Token *
-Token::Eckige_Klammer_Auf(Zeichen z)
+Token::Eckige_Klammer_Auf(Spanne spanne)
 {
-    auto erg = new Token(Token::ECKIGE_KLAMMER_AUF, z, z.pos(), 1);
+    auto erg = new Token(Token::ECKIGE_KLAMMER_AUF, spanne);
 
     return erg;
 }
 
 Token *
-Token::Eckige_Klammer_Zu(Zeichen z)
+Token::Eckige_Klammer_Zu(Spanne spanne)
 {
-    auto erg = new Token(Token::ECKIGE_KLAMMER_ZU, z, z.pos(), 1);
+    auto erg = new Token(Token::ECKIGE_KLAMMER_ZU, spanne);
 
     return erg;
 }
 
 Token *
-Token::Geschweifte_Klammer_Auf(Zeichen z)
+Token::Geschweifte_Klammer_Auf(Spanne spanne)
 {
-    auto erg = new Token(Token::GESCHWEIFTE_KLAMMER_AUF, z, z.pos(), 1);
+    auto erg = new Token(Token::GESCHWEIFTE_KLAMMER_AUF, spanne);
 
     return erg;
 }
 
 Token *
-Token::Geschweifte_Klammer_Zu(Zeichen z)
+Token::Geschweifte_Klammer_Zu(Spanne spanne)
 {
-    auto erg = new Token(Token::GESCHWEIFTE_KLAMMER_ZU, z, z.pos(), 1);
+    auto erg = new Token(Token::GESCHWEIFTE_KLAMMER_ZU, spanne);
 
     return erg;
 }
 
 Token *
-Token::Groesser(Zeichen z)
+Token::Groesser(Spanne spanne)
 {
-    auto erg = new Token(Token::GROESSER, z, z.pos(), 1);
+    auto erg = new Token(Token::GROESSER, spanne);
 
     return erg;
 }
 
 Token *
-Token::Groesser_Gleich(Zeichen z)
+Token::Groesser_Gleich(Spanne spanne)
 {
-    auto erg = new Token(Token::GROESSER_GLEICH, z, z.pos(), 2);
+    auto erg = new Token(Token::GROESSER_GLEICH, spanne);
 
     return erg;
 }
 
 Token *
-Token::Kleiner_Gleich(Zeichen z)
+Token::Kleiner_Gleich(Spanne spanne)
 {
-    auto erg = new Token(Token::KLEINER_GLEICH, z, z.pos(), 2);
+    auto erg = new Token(Token::KLEINER_GLEICH, spanne);
 
     return erg;
 }
 
 Token *
-Token::Kleiner(Zeichen z)
+Token::Kleiner(Spanne spanne)
 {
-    auto erg = new Token(Token::KLEINER, z, z.pos(), 1);
+    auto erg = new Token(Token::KLEINER, spanne);
 
     return erg;
 }
 
 Token *
-Token::Gleich(Zeichen z)
+Token::Gleich(Spanne spanne)
 {
-    auto erg = new Token(Token::GLEICH, z, z.pos(), 1);
+    auto erg = new Token(Token::GLEICH, spanne);
 
     return erg;
 }
 
 Token *
-Token::Gleich_Gleich(Zeichen z)
+Token::Gleich_Gleich(Spanne spanne)
 {
-    auto erg = new Token(Token::GLEICH_GLEICH, z, z.pos(), 2);
+    auto erg = new Token(Token::GLEICH_GLEICH, spanne);
 
     return erg;
 }
 
 Token *
-Token::Punkt(Zeichen z)
+Token::Punkt(Spanne spanne)
 {
-    auto erg = new Token(Token::PUNKT, z, z.pos(), 1);
+    auto erg = new Token(Token::PUNKT, spanne);
 
     return erg;
 }
 
 Token *
-Token::Komma(Zeichen z)
+Token::Komma(Spanne spanne)
 {
-    auto erg = new Token(Token::KOMMA, z, z.pos(), 1);
+    auto erg = new Token(Token::KOMMA, spanne);
 
     return erg;
 }
 
 Token *
-Token::Plus(Zeichen z)
+Token::Plus(Spanne spanne)
 {
-    auto erg = new Token(Token::PLUS, z, z.pos(), 1);
+    auto erg = new Token(Token::PLUS, spanne);
 
     return erg;
 }
 
 Token *
-Token::Minus(Zeichen z)
+Token::Minus(Spanne spanne)
 {
-    auto erg = new Token(Token::MINUS, z, z.pos(), 1);
+    auto erg = new Token(Token::MINUS, spanne);
 
     return erg;
 }
 
 Token *
-Token::Stern(Zeichen z)
+Token::Stern(Spanne spanne)
 {
-    auto erg = new Token(Token::STERN, z, z.pos(), 1);
+    auto erg = new Token(Token::STERN, spanne);
 
     return erg;
 }
 
 Token *
-Token::Pisa(Zeichen z)
+Token::Pisa(Spanne spanne)
 {
-    auto erg = new Token(Token::PISA, z, z.pos(), 1);
+    auto erg = new Token(Token::PISA, spanne);
 
     return erg;
 }
 
 Token *
-Token::Pisa_Links(Zeichen z)
+Token::Pisa_Links(Spanne spanne)
 {
-    auto erg = new Token(Token::PISA_LINKS, z, z.pos(), 1);
+    auto erg = new Token(Token::PISA_LINKS, spanne);
 
     return erg;
 }
 
 Token *
-Token::Raute(Zeichen z)
+Token::Raute(Spanne spanne)
 {
-    auto erg = new Token(Token::RAUTE, z, z.pos(), 1);
+    auto erg = new Token(Token::RAUTE, spanne);
 
     return erg;
 }
 
 Token *
-Token::Prozent(Zeichen z)
+Token::Prozent(Spanne spanne)
 {
-    auto erg = new Token(Token::PROZENT, z, z.pos(), 1);
+    auto erg = new Token(Token::PROZENT, spanne);
 
     return erg;
 }
 
 Token *
-Token::Klammeraffe(Zeichen z)
+Token::Klammeraffe(Spanne spanne)
 {
-    auto erg = new Token(Token::KLAMMERAFFE, z, z.pos(), 1);
+    auto erg = new Token(Token::KLAMMERAFFE, spanne);
 
     return erg;
 }
 
 Token *
-Token::Doppelpunkt(Zeichen z)
+Token::Doppelpunkt(Spanne spanne)
 {
-    auto erg = new Token(Token::DOPPELPUNKT, z, z.pos(), 1);
+    auto erg = new Token(Token::DOPPELPUNKT, spanne);
 
     return erg;
 }
 
 Token *
-Token::Semikolon(Zeichen z)
+Token::Semikolon(Spanne spanne)
 {
-    auto erg = new Token(Token::SEMIKOLON, z, z.pos(), 1);
+    auto erg = new Token(Token::SEMIKOLON, spanne);
 
     return erg;
 }
 
 Token *
-Token::Ausrufezeichen(Zeichen z)
+Token::Ausrufezeichen(Spanne spanne)
 {
-    auto erg = new Token(Token::AUSRUFEZEICHEN, z, z.pos(), 1);
+    auto erg = new Token(Token::AUSRUFEZEICHEN, spanne);
 
     return erg;
 }
 
 Token *
-Token::Kaufmannsund(Zeichen z)
+Token::Kaufmannsund(Spanne spanne)
 {
-    auto erg = new Token(Token::KAUFMANNSUND, z, z.pos(), 1);
+    auto erg = new Token(Token::KAUFMANNSUND, spanne);
 
     return erg;
 }
 
 Token *
-Token::Balken(Zeichen z)
+Token::Balken(Spanne spanne)
 {
-    auto erg = new Token(Token::BALKEN, z, z.pos(), 1);
+    auto erg = new Token(Token::BALKEN, spanne);
 
     return erg;
 }
 
 Token *
-Token::Zeilenumbruch(Zeichen z)
+Token::Zeilenumbruch(Spanne spanne)
 {
-    auto erg = new Token(Token::ZEILENUMBRUCH, z, z.pos(), 1);
+    auto erg = new Token(Token::ZEILENUMBRUCH, spanne);
 
     return erg;
 }
 
-Token_Ganzzahl::Token_Ganzzahl(Zeichen anfang, Zeichen ende, uint32_t zahl, uint16_t basis)
-    : Token(GANZZAHL, anfang, anfang.pos(), ende.pos() - anfang.pos())
+Token_Ganzzahl::Token_Ganzzahl(Spanne spanne, uint32_t zahl, uint16_t basis)
+    : Token(GANZZAHL, spanne)
     , _zahl(zahl)
     , _basis(basis)
 {
@@ -326,42 +335,42 @@ Token_Ganzzahl::zahl()
 }
 
 void
-Token_Ganzzahl::ausgeben()
+Token_Ganzzahl::ausgeben(std::ostream &ausgabe)
 {
     if (_basis == 10)
     {
-        printf("%s(%d)", Token_Namen(_art), _zahl);
+        ausgabe << Token_Namen(_art) << std::format(" ({})", _zahl);
     }
     else if (_basis == 16)
     {
-        printf("%s(0x%04X)", Token_Namen(_art), _zahl);
+        ausgabe << Token_Namen(_art) << std::format("({:#06X})", _zahl);
     }
     else if (_basis == 2)
     {
-        printf("%s(%d)", Token_Namen(_art), _zahl);
+        ausgabe << Token_Namen(_art) << std::format(" ({})", _zahl);
     }
     else
     {
-        printf("%s(%d)", Token_Namen(_art), _zahl);
+        ausgabe << Token_Namen(_art) << std::format(" ({})", _zahl);
     }
 }
 
-Token_Hex::Token_Hex(Zeichen anfang, Zeichen ende, uint16_t zahl)
-    : Token(HEX, anfang, anfang.pos(), ende.pos() - anfang.pos())
-    , _zahl(zahl)
+Token_Hex::Token_Hex(Spanne spanne, uint16_t wert)
+    : Token(HEX, spanne)
+    , _wert(wert)
 {
 }
 
 uint16_t
-Token_Hex::zahl()
+Token_Hex::wert()
 {
-    return _zahl;
+    return _wert;
 }
 
 void
-Token_Hex::ausgeben()
+Token_Hex::ausgeben(std::ostream &ausgabe)
 {
-    printf("%s($%04X)", Token_Namen(_art), _zahl);
+    ausgabe << Token_Namen(_art) << std::format("({:#06X})", _wert);
 }
 
 char *

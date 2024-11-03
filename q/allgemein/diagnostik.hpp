@@ -7,7 +7,7 @@ class Diagnostik
 public:
     struct Meldung
     {
-        Position position;
+        Spanne spanne;
         Fehler * fehler;
     };
 
@@ -15,7 +15,7 @@ public:
 
     bool hat_meldungen();
     void melden(Meldung meldung);
-    void melden(Position position, Fehler *fehler);
+    void melden(Spanne spanne, Fehler *fehler);
     std::vector<Meldung> meldungen();
 
 private:
