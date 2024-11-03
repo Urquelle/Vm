@@ -358,6 +358,12 @@ Text::kopie()
     return erg;
 }
 
+std::string
+Text::text()
+{
+    return _text;
+}
+
 #if 0
 Ganzzahl::Ganzzahl(Token *token)
     : Knoten(AST_GANZZAHL)
@@ -725,6 +731,33 @@ std::string
 Anweisung_Markierung::name()
 {
     return _name;
+}
+
+Anweisung_Import::Anweisung_Import(Spanne spanne, std::string modul)
+    : Anweisung(Anweisung::IMPORT, spanne)
+    , _modul(modul)
+{
+}
+
+void
+Anweisung_Import::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
+{
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << ": " << _modul;
+}
+
+Anweisung *
+Anweisung_Import::kopie()
+{
+    Anweisung_Import *erg = new Anweisung_Import(spanne(), _modul);
+
+    return erg;
+}
+
+std::string
+Anweisung_Import::modul()
+{
+    return _modul;
 }
 // }}}
 

@@ -3,6 +3,9 @@
 #include <cassert>
 #include <cctype>
 
+#include <fstream>
+#include <sstream>
+
 #define FEHLER_WENN(A, F) do { if (A) { melden(token()->spanne(), F); } } while(0)
 
 namespace Asm {
@@ -55,7 +58,35 @@ Syntax::starten()
         }
         else if (zeile.art == Syntax::ANWEISUNG)
         {
-            erg.anweisungen.push_back((Asm::Anweisung *) zeile.daten);
+            auto *anweisung = (Asm::Anweisung *) zeile.daten;
+
+            if (anweisung->art() == Anweisung::IMPORT)
+            {
+                auto datei_name = anweisung->als<Anweisung_Import *>()->modul();
+                std::ifstream t(datei_name);
+                std::stringstream text;
+                text << t.rdbuf();
+
+                auto lex = Lexer(datei_name, text.str());
+                auto tokens = lex.starten();
+
+                auto syntax = Syntax(tokens);
+                auto ast = syntax.starten();
+
+                for (auto *dekl : ast.deklarationen)
+                {
+                    erg.deklarationen.push_back(dekl);
+                }
+
+                for (auto *a : ast.anweisungen)
+                {
+                    erg.anweisungen.push_back(a);
+                }
+            }
+            else
+            {
+                erg.anweisungen.push_back(anweisung);
+            }
         }
         else
         {
@@ -81,9 +112,23 @@ Syntax::melden(Spanne spanne, Fehler *fehler)
     _diagnostik.melden(spanne, fehler);
 }
 
+void
+Syntax::melden(Token *token, Fehler *fehler)
+{
+    melden(token->spanne(), fehler);
+}
+
+void
+Syntax::melden(Ausdruck *ausdruck, Fehler *fehler)
+{
+    melden(ausdruck->spanne(), fehler);
+}
+
 Syntax::Zeile
 Syntax::zeile_einlesen()
 {
+    akzeptiere(Token::ZEILENUMBRUCH);
+
     auto exportieren = akzeptiere(Token::PLUS);
 
     if (strcmp(token()->text(), "data8") == 0)
@@ -212,7 +257,14 @@ Syntax::anweisung_einlesen()
 
     if (gleich(Token::PROZENT))
     {
-        anweisung = makro_anweisung_einlesen();
+        if (token(1)->art() == Token::NAME && strcmp(token(1)->text(), "import")== 0)
+        {
+            anweisung = import_anweisung_einlesen();
+        }
+        else
+        {
+            anweisung = makro_anweisung_einlesen();
+        }
     }
     else if (gleich(Token::NAME) && token(1)->art() == Token::DOPPELPUNKT)
     {
@@ -224,6 +276,39 @@ Syntax::anweisung_einlesen()
     }
 
     return anweisung;
+}
+
+Asm::Anweisung *
+Syntax::import_anweisung_einlesen()
+{
+    Asm::Anweisung *erg = nullptr;
+
+    auto *prozent = erwarte(Token::PROZENT);
+    auto *schlüsselwort = brauche<Name *>(Ausdruck::NAME);
+
+    if (schlüsselwort == nullptr || strcmp("import", schlüsselwort->name().c_str()) != 0)
+    {
+        melden(schlüsselwort, new Fehler("schlüsselwort 'import' erwartet"));
+
+        return erg;
+    }
+
+    auto *modul = brauche<Text *>(Ausdruck::TEXT);
+
+    if (modul == nullptr)
+    {
+        melden(modul, new Fehler("\"<dateiname>\" erwartet"));
+
+        return erg;
+    }
+
+    akzeptiere(Token::ZEILENUMBRUCH);
+
+    erg = new Anweisung_Import(
+        Spanne(prozent->spanne().von(), modul->spanne().bis()),
+        modul->text());
+
+    return erg;
 }
 
 Asm::Ausdruck *

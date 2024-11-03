@@ -1,3 +1,5 @@
+;; Makros
+
 makro Test(A, B, C) {
     mov A $1000
     inc B

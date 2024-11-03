@@ -26,6 +26,7 @@ public:
     bool symbol_registriert(std::string name);
     Symbol *symbol_holen(std::string name);
 
+    void        anweisungen_analysieren();
     Anweisung * anweisung_analysieren(Asm::Anweisung *anweisung);
     Anweisung * anweisung_kopieren(Asm::Anweisung *anweisung);
 

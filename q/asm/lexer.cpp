@@ -259,6 +259,7 @@ Lexer::starten()
         {
             z = weiter();
             anfang = z; // um das initiale " nicht in der länge mitzuzählen
+            auto ende = z;
 
             while (z != '"')
             {
@@ -267,6 +268,7 @@ Lexer::starten()
                     z = weiter();
                 }
 
+                ende = z;
                 z = weiter();
             }
 
@@ -275,7 +277,7 @@ Lexer::starten()
                 weiter();
             }
 
-            erg.push_back(Token::Text(Spanne(anfang, z)));
+            erg.push_back(Token::Text(Spanne(anfang, zeichen(-2))));
         }
 
         // INFO: name

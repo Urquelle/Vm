@@ -34,6 +34,7 @@ public:
     Ast starten();
 
     Asm::Anweisung   * anweisung_einlesen();
+    Asm::Anweisung   * import_anweisung_einlesen();
     Asm::Anweisung   * makro_anweisung_einlesen();
     Asm::Anweisung   * markierung_anweisung_einlesen();
     Asm::Anweisung   * asm_anweisung_einlesen();
@@ -62,6 +63,8 @@ public:
 
     Diagnostik diagnostik();
     void melden(Spanne spanne, Fehler *fehler);
+    void melden(Token *token, Fehler *fehler);
+    void melden(Ausdruck *ausdruck, Fehler *fehler);
 
 private:
     std::vector<Token *> _token;

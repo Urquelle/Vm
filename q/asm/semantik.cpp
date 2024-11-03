@@ -18,11 +18,7 @@ Semantik::starten()
     makros_registrieren();
     makros_erweitern();
     markierungen_registrieren();
-
-    for (auto anweisung : _ast.anweisungen)
-    {
-        anweisung_analysieren(anweisung);
-    }
+    anweisungen_analysieren();
 
     return _ast;
 }
@@ -242,7 +238,7 @@ Semantik::markierungen_registrieren()
 
         else if (dekl->art() == Deklaration::MAKRO)
         {
-            // INFO: makros wurden bereits in makros_registrieren behandelt
+            // INFO: makro deklarationen wurden bereits in makros_registrieren behandelt
         }
     }
 
@@ -257,23 +253,28 @@ Semantik::markierungen_registrieren()
 
         else if (a->art() == Anweisung::MAKRO)
         {
-            assert(!"nicht implementiert");
-
-            // AUFGABE: a) als allererstes die makros durchgehen
-            //          und als symbol registrieren. dann alle anweisungen durchgehen, die makros aufrufen und diese durch
-            //          den makrorumpf ersetzen?
-            //          b) makros auflösen und ast analysieren, und in einer zusätzlichen phase die adressen berechnen
+            // INFO: makro anweisungen wurden bereits in makros_erweitern() behandelt
         }
 
         else if (a->art() == Anweisung::MARKIERUNG)
         {
             auto *markierung = a->als<Anweisung_Markierung *>();
             markierung->adresse_setzen(adresse);
+
             if (!symbol_registrieren(markierung->name(), new Symbol_Markierung(markierung->name(), adresse)))
             {
-                //
+                melden(markierung, new Fehler(std::format("markierung {} konnte nicht registriert werden", markierung->name())));
             }
         }
+    }
+}
+
+void
+Semantik::anweisungen_analysieren()
+{
+    for (auto anweisung : _ast.anweisungen)
+    {
+        anweisung_analysieren(anweisung);
     }
 }
 

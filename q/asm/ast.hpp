@@ -269,6 +269,8 @@ public:
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     Ausdruck *kopie() override;
 
+    std::string text();
+
 private:
     std::string _text;
 };
@@ -322,7 +324,8 @@ private:
 #define Anweisung_Art \
     X(ASM,        1, "Asm") \
     X(MAKRO,      2, "Makro") \
-    X(MARKIERUNG, 3, "Markierung")
+    X(MARKIERUNG, 3, "Markierung") \
+    X(IMPORT,     4, "Import")
 
 class Anweisung
 {
@@ -373,6 +376,20 @@ public:
 private:
     std::string _op;
     std::vector<Ausdruck *> _operanden;
+};
+
+class Anweisung_Import : public Anweisung
+{
+public:
+    Anweisung_Import(Spanne spanne, std::string modul);
+
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
+    Anweisung *kopie() override;
+
+    std::string modul();
+
+private:
+    std::string _modul;
 };
 
 class Anweisung_Makro : public Anweisung
