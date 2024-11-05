@@ -1,12 +1,12 @@
 #include "asm/syntax.hpp"
 
 #include <cassert>
-#include <cctype>
-
 #include <fstream>
 #include <sstream>
 
-#define FEHLER_WENN(A, F) do { if (A) { melden(token()->spanne(), F); } } while(0)
+#include "allgemein/diagnostik.hpp"
+#include "asm/ast.hpp"
+#include "asm/lexer.hpp"
 
 namespace Asm {
 
@@ -62,6 +62,13 @@ Syntax::starten()
 
             if (anweisung->art() == Anweisung::IMPORT)
             {
+                auto *import = anweisung->als<Anweisung_Import *>();
+                auto *modul = new Modul();
+
+                modul->spanne = Spanne(anweisung->spanne());
+                modul->name = import->zone();
+                modul->adresse = import->start_adresse();
+
                 auto datei_name = anweisung->als<Anweisung_Import *>()->modul();
                 std::ifstream t(datei_name);
                 std::stringstream text;
@@ -75,13 +82,15 @@ Syntax::starten()
 
                 for (auto *dekl : ast.deklarationen)
                 {
-                    erg.deklarationen.push_back(dekl);
+                    modul->deklarationen.push_back(dekl);
                 }
 
                 for (auto *a : ast.anweisungen)
                 {
-                    erg.anweisungen.push_back(a);
+                    modul->anweisungen.push_back(a);
                 }
+
+                erg.module.push_back(modul);
             }
             else
             {
@@ -124,6 +133,18 @@ Syntax::melden(Ausdruck *ausdruck, Fehler *fehler)
     melden(ausdruck->spanne(), fehler);
 }
 
+void
+Syntax::melden(Anweisung *anweisung, Fehler *fehler)
+{
+    melden(anweisung->spanne(), fehler);
+}
+
+void
+Syntax::melden(Deklaration *deklaration, Fehler *fehler)
+{
+    melden(deklaration->spanne(), fehler);
+}
+
 Syntax::Zeile
 Syntax::zeile_einlesen()
 {
@@ -131,14 +152,14 @@ Syntax::zeile_einlesen()
 
     auto exportieren = akzeptiere(Token::PLUS);
 
-    if (strcmp(token()->text(), "data8") == 0)
+    if (strcmp(token()->text(), "dat8") == 0)
     {
         auto dekl = daten_dekl_einlesen(1, exportieren);
         Zeile erg = zeile_deklaration(dekl);
 
         return erg;
     }
-    else if (strcmp(token()->text(), "data16") == 0)
+    else if (strcmp(token()->text(), "dat16") == 0)
     {
         auto dekl = daten_dekl_einlesen(2, exportieren);
         Zeile erg = zeile_deklaration(dekl);
@@ -147,19 +168,7 @@ Syntax::zeile_einlesen()
     }
     else if (strcmp(token()->text(), "const") == 0)
     {
-        auto *konst = weiter();
-        auto *name = brauche<Name *>(Ausdruck::NAME);
-        FEHLER_WENN(name == nullptr, Syntax::Fehler_Name_Erwartet);
-        erwarte(Token::GLEICH);
-        auto *hex = brauche<Hex *>(Ausdruck::HEX);
-        FEHLER_WENN(hex == nullptr, Syntax::Fehler_Wert_Erwartet);
-
-        auto dekl = new Deklaration_Konstante(
-            Spanne(konst->spanne().von(), hex->spanne().bis()),
-            name->name(),
-            hex->wert(),
-            exportieren);
-
+        auto *dekl = konst_dekl_einlesen(exportieren);
         Zeile erg = zeile_deklaration(dekl);
 
         return erg;
@@ -178,6 +187,13 @@ Syntax::zeile_einlesen()
 
         return erg;
     }
+    else if (strcmp(token()->text(), "import") == 0)
+    {
+        auto *anweisung = import_anweisung_einlesen();
+        Zeile erg = zeile_anweisung(anweisung);
+
+        return erg;
+    }
     else
     {
         auto *anweisung = anweisung_einlesen();
@@ -192,7 +208,7 @@ Syntax::makro_anweisung_einlesen()
 {
     auto *prozent = weiter();
     auto *name = brauche<Name *>(Ausdruck::NAME);
-    FEHLER_WENN(name == nullptr, new Fehler("namen des makros erwartet"));
+    FEHLER_WENN(name == nullptr, token(), new Fehler("namen des makros erwartet"));
 
     std::vector<Ausdruck *> operanden;
     while (Ausdruck *operand = ausdruck_einlesen())
@@ -226,11 +242,11 @@ Syntax::asm_anweisung_einlesen()
         }
     }
 
+    auto anfang = anw->spanne().von();
+    auto ende = operanden.size() ? operanden.back()->spanne().bis() : anw->spanne().bis();
+
     return new Asm::Anweisung_Asm(
-        Spanne(
-            anw->spanne().von(),
-            operanden.back()->spanne().bis()
-        ),
+        Spanne(anfang, ende),
         anw->name(), operanden);
 }
 
@@ -257,14 +273,7 @@ Syntax::anweisung_einlesen()
 
     if (gleich(Token::PROZENT))
     {
-        if (token(1)->art() == Token::NAME && strcmp(token(1)->text(), "import")== 0)
-        {
-            anweisung = import_anweisung_einlesen();
-        }
-        else
-        {
-            anweisung = makro_anweisung_einlesen();
-        }
+        anweisung = makro_anweisung_einlesen();
     }
     else if (gleich(Token::NAME) && token(1)->art() == Token::DOPPELPUNKT)
     {
@@ -283,29 +292,25 @@ Syntax::import_anweisung_einlesen()
 {
     Asm::Anweisung *erg = nullptr;
 
-    auto *prozent = erwarte(Token::PROZENT);
     auto *schlüsselwort = brauche<Name *>(Ausdruck::NAME);
+    FEHLER_WENN(schlüsselwort == nullptr, token(), new Fehler("schlüsselwort 'import' erwartet"));
+    FEHLER_WENN(strcmp("import", schlüsselwort->name().c_str()) != 0, schlüsselwort, new Fehler("schlüsselwort 'import' erwartet"));
 
-    if (schlüsselwort == nullptr || strcmp("import", schlüsselwort->name().c_str()) != 0)
-    {
-        melden(schlüsselwort, new Fehler("schlüsselwort 'import' erwartet"));
+    auto *zone = brauche<Name *>(Ausdruck::NAME);
+    FEHLER_WENN(zone == nullptr, token(), new Fehler("gültigen namen erwartet"));
 
-        return erg;
-    }
+    auto *adresse = brauche<Hex *>(Ausdruck::HEX);
+    FEHLER_WENN(adresse == nullptr, token(), new Fehler("hexliteral als adresse erwartet"));
 
     auto *modul = brauche<Text *>(Ausdruck::TEXT);
-
-    if (modul == nullptr)
-    {
-        melden(modul, new Fehler("\"<dateiname>\" erwartet"));
-
-        return erg;
-    }
+    FEHLER_WENN(modul == nullptr, token(), new Fehler("\"<dateiname>\" erwartet"));
 
     akzeptiere(Token::ZEILENUMBRUCH);
 
     erg = new Anweisung_Import(
-        Spanne(prozent->spanne().von(), modul->spanne().bis()),
+        Spanne(schlüsselwort->spanne().von(), modul->spanne().bis()),
+        zone->name(),
+        adresse->wert(),
         modul->text());
 
     return erg;
@@ -346,13 +351,32 @@ Syntax::plus_ausdruck_einlesen()
 Ausdruck *
 Syntax::mult_ausdruck_einlesen()
 {
-    auto *links = basis_ausdruck_einlesen();
+    auto *links = feld_ausdruck_einlesen();
 
     while (gleich(Token::STERN) || gleich(Token::PISA))
     {
         auto op = weiter();
         auto *rechts = basis_ausdruck_einlesen();
         links = new Bin(Spanne(links->spanne().von(), rechts->spanne().bis()), op, links, rechts);
+    }
+
+    return links;
+}
+
+Ausdruck *
+Syntax::feld_ausdruck_einlesen()
+{
+    auto *links = basis_ausdruck_einlesen();
+
+    while (akzeptiere(Token::PUNKT))
+    {
+        auto *feld = brauche<Name *>(Ausdruck::NAME);
+        FEHLER_WENN(feld == nullptr, token(), new Fehler("gültigen bezeichner erwartet"));
+
+        links = new Feld(
+            Spanne(
+                links->spanne().von(), feld->spanne().bis()
+            ), links, feld->name());
     }
 
     return links;
@@ -369,23 +393,22 @@ Syntax::basis_ausdruck_einlesen()
         case Token::AUSRUFEZEICHEN:
         {
             auto *ausrufezeichen = weiter();
-            auto *ausdruck = brauche<Name *>(Ausdruck::NAME);
-            FEHLER_WENN(ausdruck == nullptr, Fehler_Name_Erwartet);
+            auto *ausdruck = ausdruck_einlesen();
 
-            return new Variable(Spanne(ausrufezeichen->spanne().von(), ausdruck->spanne().bis()), ausdruck->name());
+            return new Variable(Spanne(ausrufezeichen->spanne().von(), ausdruck->spanne().bis()), ausdruck);
         } break;
 
         case Token::KLEINER:
         {
             auto *kleiner_als = weiter();
-            auto *schablone = brauche<Name *>(Ausdruck::NAME);
-            auto *größer_als = erwarte(Token::GROESSER);
-            auto *basis = brauche<Name *>(Ausdruck::NAME);
-            erwarte(Token::PUNKT);
-            auto *feld = brauche<Name *>(Ausdruck::NAME);
+            auto *schablone = ausdruck_einlesen();
+            auto *größer_als = erwarte(Token::GRÖSSER);
+            auto *variable = brauche<Feld *>(Ausdruck::FELD);
+            FEHLER_WENN(variable == nullptr, token(), new Fehler("feldzugriff erwartet"));
 
-            return new Als(Spanne(kleiner_als->spanne().von(), feld->spanne().bis()),
-                           schablone->name(), basis->name(), feld->name());
+            return new Als(
+                Spanne(kleiner_als->spanne().von(), variable->spanne().bis()),
+                schablone, variable);
         } break;
 
         case Token::ECKIGE_KLAMMER_AUF:
@@ -476,6 +499,25 @@ Syntax::basis_ausdruck_einlesen()
 }
 // }}}
 // deklaration {{{
+Asm::Deklaration *
+Syntax::konst_dekl_einlesen(bool exportieren)
+{
+    auto *konst = weiter();
+    auto *name = brauche<Name *>(Ausdruck::NAME);
+    FEHLER_WENN(name == nullptr, token(), Syntax::Fehler_Name_Erwartet);
+    erwarte(Token::GLEICH);
+    auto *hex = brauche<Hex *>(Ausdruck::HEX);
+    FEHLER_WENN(hex == nullptr, token(), Syntax::Fehler_Wert_Erwartet);
+
+    auto *erg = new Deklaration_Konstante(
+        Spanne(konst->spanne().von(), hex->spanne().bis()),
+        name->name(),
+        hex->wert(),
+        exportieren);
+
+    return erg;
+}
+
 Asm::Deklaration *
 Syntax::schablone_dekl_einlesen(bool exportieren)
 {
@@ -574,7 +616,7 @@ Syntax::daten_dekl_einlesen(uint32_t größe, bool exportieren)
     while (ungleich(Token::GESCHWEIFTE_KLAMMER_ZU))
     {
         auto hex = brauche<Hex *>(Ausdruck::HEX);
-        FEHLER_WENN(hex == nullptr, Fehler_Wert_Erwartet);
+        FEHLER_WENN(hex == nullptr, token(), Fehler_Wert_Erwartet);
         daten.push_back(hex);
         akzeptiere(Token::KOMMA);
     }

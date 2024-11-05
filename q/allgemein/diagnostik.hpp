@@ -2,6 +2,11 @@
 
 #include <vector>
 
+#include "allgemein/fehler.hpp"
+#include "allgemein/spanne.hpp"
+
+#define FEHLER_WENN(A, K, F) do { if (A) { melden((K), (F)); } } while(0)
+
 class Diagnostik
 {
 public:

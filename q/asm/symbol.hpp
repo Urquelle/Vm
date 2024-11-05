@@ -1,10 +1,9 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
-#include <map>
+#include <string>
 
-#include "vm/operand.hpp"
+#include "asm/ast.hpp"
 
 namespace Asm {
 
@@ -22,6 +21,8 @@ public:
         MAKRO       = 5,
         PLATZHALTER = 6,
         MARKIERUNG  = 7,
+        MODUL       = 8,
+        FELD        = 9,
     };
 
     Symbol(Art art, std::string name);
@@ -90,12 +91,7 @@ public:
         uint16_t _größe;
     };
 
-    Symbol_Schablone(std::string name, std::map<std::string, Feld *> felder);
-
-    std::map<std::string, Feld *> felder();
-
-private:
-    std::map<std::string, Feld *> _felder;
+    Symbol_Schablone(std::string name, Zone *zone);
 };
 
 class Symbol_Makro : public Symbol
@@ -130,6 +126,30 @@ public:
     uint16_t adresse();
 private:
     uint16_t _adresse;
+};
+
+class Symbol_Modul : public Symbol
+{
+public:
+    Symbol_Modul(std::string name, Modul *modul);
+
+    Modul *modul() const;
+
+private:
+    Modul *_modul;
+};
+
+class Symbol_Feld : public Symbol
+{
+public:
+    Symbol_Feld(std::string name, uint16_t versatz, uint16_t größe);
+
+    uint16_t versatz();
+    uint16_t größe();
+
+private:
+    uint16_t _versatz;
+    uint16_t _größe;
 };
 
 }

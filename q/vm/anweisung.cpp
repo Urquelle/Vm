@@ -1322,9 +1322,9 @@ Anweisung_Jne::starten(Cpu *cpu)
     if (_op->art() == Operand::OPND_LIT)
     {
         auto wert = _op->als<Operand_Lit *>()->wert();
-        auto acc  = cpu->regs[REG_ACU];
+        auto acu  = cpu->regs[REG_ACU];
 
-        if (wert != acc)
+        if (wert != acu)
         {
             cpu->regs[REG_IP] = adr;
         }
@@ -1333,9 +1333,9 @@ Anweisung_Jne::starten(Cpu *cpu)
     {
         auto reg = _op->als<Operand_Reg *>()->wert();
         auto wert = cpu->regs[reg];
-        auto acc = cpu->regs[REG_ACU];
+        auto acu = cpu->regs[REG_ACU];
 
-        if (wert != acc)
+        if (wert != acu)
         {
             cpu->regs[REG_IP] = adr;
         }
@@ -1350,9 +1350,9 @@ Anweisung_Jeq::starten(Cpu *cpu)
     if (_op->art() == Operand::OPND_LIT)
     {
         auto wert = _op->als<Operand_Lit *>()->wert();
-        auto acc  = cpu->regs[REG_ACU];
+        auto acu  = cpu->regs[REG_ACU];
 
-        if (wert == acc)
+        if (wert == acu)
         {
             cpu->regs[REG_IP] = adr;
         }
@@ -1361,9 +1361,9 @@ Anweisung_Jeq::starten(Cpu *cpu)
     {
         auto reg = _op->als<Operand_Reg *>()->wert();
         auto wert = cpu->regs[reg];
-        auto acc = cpu->regs[REG_ACU];
+        auto acu = cpu->regs[REG_ACU];
 
-        if (wert == acc)
+        if (wert == acu)
         {
             cpu->regs[REG_IP] = adr;
         }
@@ -1378,9 +1378,9 @@ Anweisung_Jlt::starten(Cpu *cpu)
     if (_op->art() == Operand::OPND_LIT)
     {
         auto wert = _op->als<Operand_Lit *>()->wert();
-        auto acc  = cpu->regs[REG_ACU];
+        auto acu  = cpu->regs[REG_ACU];
 
-        if (wert < acc)
+        if (wert < acu)
         {
             cpu->regs[REG_IP] = adr;
         }
@@ -1389,9 +1389,9 @@ Anweisung_Jlt::starten(Cpu *cpu)
     {
         auto reg = _op->als<Operand_Reg *>()->wert();
         auto wert = cpu->regs[reg];
-        auto acc = cpu->regs[REG_ACU];
+        auto acu = cpu->regs[REG_ACU];
 
-        if (wert < acc)
+        if (wert < acu)
         {
             cpu->regs[REG_IP] = adr;
         }
@@ -1406,9 +1406,9 @@ Anweisung_Jgt::starten(Cpu *cpu)
     if (_op->art() == Operand::OPND_LIT)
     {
         auto wert = _op->als<Operand_Lit *>()->wert();
-        auto acc  = cpu->regs[REG_ACU];
+        auto acu  = cpu->regs[REG_ACU];
 
-        if (wert > acc)
+        if (wert > acu)
         {
             cpu->regs[REG_IP] = adr;
         }
@@ -1417,9 +1417,9 @@ Anweisung_Jgt::starten(Cpu *cpu)
     {
         auto reg = _op->als<Operand_Reg *>()->wert();
         auto wert = cpu->regs[reg];
-        auto acc = cpu->regs[REG_ACU];
+        auto acu = cpu->regs[REG_ACU];
 
-        if (wert > acc)
+        if (wert > acu)
         {
             cpu->regs[REG_IP] = adr;
         }
@@ -1434,9 +1434,9 @@ Anweisung_Jle::starten(Cpu *cpu)
     if (_op->art() == Operand::OPND_LIT)
     {
         auto wert = _op->als<Operand_Lit *>()->wert();
-        auto acc  = cpu->regs[REG_ACU];
+        auto acu  = cpu->regs[REG_ACU];
 
-        if (wert <= acc)
+        if (wert <= acu)
         {
             cpu->regs[REG_IP] = adr;
         }
@@ -1445,9 +1445,9 @@ Anweisung_Jle::starten(Cpu *cpu)
     {
         auto reg = _op->als<Operand_Reg *>()->wert();
         auto wert = cpu->regs[reg];
-        auto acc = cpu->regs[REG_ACU];
+        auto acu = cpu->regs[REG_ACU];
 
-        if (wert <= acc)
+        if (wert <= acu)
         {
             cpu->regs[REG_IP] = adr;
         }
@@ -1462,9 +1462,9 @@ Anweisung_Jge::starten(Cpu *cpu)
     if (_op->art() == Operand::OPND_LIT)
     {
         auto wert = _op->als<Operand_Lit *>()->wert();
-        auto acc  = cpu->regs[REG_ACU];
+        auto acu  = cpu->regs[REG_ACU];
 
-        if (wert >= acc)
+        if (wert >= acu)
         {
             cpu->regs[REG_IP] = adr;
         }
@@ -1473,9 +1473,9 @@ Anweisung_Jge::starten(Cpu *cpu)
     {
         auto reg = _op->als<Operand_Reg *>()->wert();
         auto wert = cpu->regs[reg];
-        auto acc = cpu->regs[REG_ACU];
+        auto acu = cpu->regs[REG_ACU];
 
-        if (wert >= acc)
+        if (wert >= acu)
         {
             cpu->regs[REG_IP] = adr;
         }

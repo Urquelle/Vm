@@ -1,5 +1,7 @@
 #include "asm/token.hpp"
 
+#include <format>
+
 namespace Asm {
 
 
@@ -148,7 +150,7 @@ Token::Geschweifte_Klammer_Zu(Spanne spanne)
 Token *
 Token::Groesser(Spanne spanne)
 {
-    auto erg = new Token(Token::GROESSER, spanne);
+    auto erg = new Token(Token::GRÖSSER, spanne);
 
     return erg;
 }
@@ -156,7 +158,7 @@ Token::Groesser(Spanne spanne)
 Token *
 Token::Groesser_Gleich(Spanne spanne)
 {
-    auto erg = new Token(Token::GROESSER_GLEICH, spanne);
+    auto erg = new Token(Token::GRÖSSER_GLEICH, spanne);
 
     return erg;
 }

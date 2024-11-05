@@ -1,5 +1,5 @@
 start:
-    mov &0050 $0A
+    mov &0050 #0A
 
 loop:
     mov acu &0050
@@ -8,7 +8,7 @@ loop:
     inc r2
     inc r2
     inc r2
-    jne $00 &[!loop]
+    jne #00 &[!loop]
 
 end:
     hlt

@@ -3,6 +3,8 @@
 #include <string>
 #include <map>
 
+#include "allgemein/ergebnis.hpp"
+
 namespace Asm {
 
 class Symbol;
@@ -19,7 +21,7 @@ public:
     bool registriert(std::string name);
     bool registrieren(std::string name, Symbol *symbol);
     Symbol * symbol(std::string name);
-    Ergebnis<Symbol *> suchen(std::string name);
+    Ergebnis<Symbol *, Fehler *> suchen(std::string name);
 
 private:
     std::string _name;

@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 
-#include "allgemein/position.hpp"
 #include "allgemein/zeichen.hpp"
 #include "asm/token.hpp"
 

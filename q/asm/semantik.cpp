@@ -1,26 +1,16 @@
 #include "asm/semantik.hpp"
-
 #include "vm/anweisung.hpp"
 
-#define FEHLER_WENN(A, F) do { if (A) { melden(token()->spanne(), F); } } while(0)
+#include <cassert>
+#include <format>
 
 namespace Asm {
 
-Semantik::Semantik(Ast ast)
+Semantik::Semantik(Ast ast, Zone *zone)
     : _ast(ast)
-    , _zone(new Zone("Welt", nullptr))
+    , _start_adresse(0)
+    , _zone(zone)
 {
-}
-
-Ast
-Semantik::starten()
-{
-    makros_registrieren();
-    makros_erweitern();
-    markierungen_registrieren();
-    anweisungen_analysieren();
-
-    return _ast;
 }
 
 Diagnostik
@@ -53,6 +43,12 @@ Semantik::melden(Token *token, Fehler *fehler)
     melden(token->spanne(), fehler);
 }
 
+void
+Semantik::melden(Modul *modul, Fehler *fehler)
+{
+    melden(modul->spanne, fehler);
+}
+
 Zone *
 Semantik::zone()
 {
@@ -72,6 +68,57 @@ void
 Semantik::zone_verlassen()
 {
     _zone = _zone->über();
+}
+
+Ast
+Semantik::starten(uint16_t start_adresse)
+{
+    _start_adresse = start_adresse;
+
+    module_importieren();
+    makros_registrieren();
+    makros_erweitern();
+    markierungen_registrieren();
+    anweisungen_analysieren();
+
+    return _ast;
+}
+
+void
+Semantik::module_importieren()
+{
+    for (auto *modul : _ast.module)
+    {
+        Symbol *sym = new Symbol_Modul(modul->name, modul);
+        sym->zone_setzen(new Zone(modul->name));
+
+        if (!symbol_registrieren(modul->name, sym))
+        {
+            melden(modul, new Fehler(std::format("modul {} konnte nicht importiert werden", modul->name)));
+        }
+
+        Semantik semantik = Semantik({
+            .deklarationen = modul->deklarationen,
+            .anweisungen = modul->anweisungen
+        });
+
+        auto ast = semantik.starten(modul->adresse);
+
+        for (auto *deklaration : ast.deklarationen)
+        {
+            if (deklaration->exportieren())
+            {
+                sym->zone()->registrieren(
+                    deklaration->name(),
+                    semantik.zone()->symbol(deklaration->name()));
+            }
+        }
+
+        for (auto *anweisung : ast.anweisungen)
+        {
+            _ast.anweisungen.push_back(anweisung);
+        }
+    }
 }
 
 void
@@ -180,30 +227,29 @@ Semantik::makros_erweitern()
 void
 Semantik::markierungen_registrieren()
 {
-    uint16_t adresse = 0;
+    uint16_t adresse = _start_adresse;
 
     for (auto *dekl : _ast.deklarationen)
     {
         if (dekl->art() == Deklaration::SCHABLONE)
         {
             auto *schablone = dekl->als<Deklaration_Schablone *>();
+            Zone *felder = new Zone(schablone->name());
 
-            std::map<std::string , Symbol_Schablone::Feld *> felder;
             uint16_t versatz = 0;
             for (auto *feld : schablone->felder())
             {
-                if (felder.contains(feld->name()))
+                if (felder->registriert(feld->name()))
                 {
                     melden(feld->spanne(), new Fehler(std::format("feld '{}' bereits vorhanden", feld->name())));
                 }
 
-                auto *f = new Symbol_Schablone::Feld(versatz, feld->größe());
-
-                felder[feld->name()] = f;
+                felder->registrieren(feld->name(), new Symbol_Feld(feld->name(), versatz, feld->größe()));
                 versatz += feld->größe();
             }
 
-            if (!symbol_registrieren(schablone->name(), new Symbol_Schablone(schablone->name(), felder)))
+            auto *sym = new Symbol_Schablone(schablone->name(), felder);
+            if (!symbol_registrieren(schablone->name(), sym))
             {
                 melden(schablone->spanne(), new Fehler(std::format("Schablone '{}' konnte nicht registriert werden", schablone->name())));
             }
@@ -421,7 +467,7 @@ Semantik::add_analysieren(Asm::Anweisung_Asm *anweisung)
 
     auto erfolg = false;
 
-    if (op1->gleich(Operand::OPND_REG) && op2->gleich(Operand::OPND_REG))
+    if (op1->gleich(Vm::Operand::OPND_REG) && op2->gleich(Vm::Operand::OPND_REG))
     {
         erfolg = true;
     }
@@ -461,37 +507,37 @@ Semantik::mov_analysieren(Asm::Anweisung_Asm *anweisung)
         auto erfolg = false;
 
         // INFO: mov reg lit
-        if (op1->gleich(Operand::OPND_REG) && op2->gleich(Operand::OPND_LIT))
+        if (op1->gleich(Vm::Operand::OPND_REG) && op2->gleich(Vm::Operand::OPND_LIT))
         {
             erfolg = true;
         }
 
         // INFO: mov reg reg
-        else if (op1->gleich(Operand::OPND_REG) && op2->gleich(Operand::OPND_REG))
+        else if (op1->gleich(Vm::Operand::OPND_REG) && op2->gleich(Vm::Operand::OPND_REG))
         {
             erfolg = true;
         }
 
         // INFO: mov reg adr
-        else if (op1->gleich(Operand::OPND_REG) && op2->gleich(Operand::OPND_ADR))
+        else if (op1->gleich(Vm::Operand::OPND_REG) && op2->gleich(Vm::Operand::OPND_ADR))
         {
             erfolg = true;
         }
 
         // INFO: mov adr reg
-        else if (op1->gleich(Operand::OPND_ADR) && op2->gleich(Operand::OPND_REG))
+        else if (op1->gleich(Vm::Operand::OPND_ADR) && op2->gleich(Vm::Operand::OPND_REG))
         {
             erfolg = true;
         }
 
         // INFO: mov adr lit
-        else if (op1->gleich(Operand::OPND_ADR) && op2->gleich(Operand::OPND_LIT))
+        else if (op1->gleich(Vm::Operand::OPND_ADR) && op2->gleich(Vm::Operand::OPND_LIT))
         {
             erfolg = true;
         }
 
         // INFO: mov reg zgr
-        else if (op1->gleich(Operand::OPND_REG) && op2->gleich(Operand::OPND_ZGR))
+        else if (op1->gleich(Vm::Operand::OPND_REG) && op2->gleich(Vm::Operand::OPND_ZGR))
         {
             erfolg = true;
         }
@@ -609,21 +655,21 @@ Semantik::operand_analysieren(Ausdruck *op)
 
     if (op->art() == Ausdruck::REG)
     {
-        return Operand::Reg(op->als<Reg *>()->reg());
+        return Vm::Operand::Reg(op->als<Reg *>()->reg());
     }
 
     else if (op->art() == Ausdruck::HEX)
     {
         auto wert = op->als<Hex *>()->wert();
 
-        return Operand::Lit(wert);
+        return Vm::Operand::Lit(wert);
     }
 
     else if (op->art() == Ausdruck::AUSWERTUNG)
     {
         uint16_t wert = ausdruck_auswerten(op->als<Auswertung *>()->ausdruck());
 
-        return Operand::Lit(wert);
+        return Vm::Operand::Lit(wert);
     }
 
     else if (op->art() == Ausdruck::ADRESSE)
@@ -631,13 +677,13 @@ Semantik::operand_analysieren(Ausdruck *op)
         auto adr = op->als<Adresse *>();
         auto aus = operand_analysieren(adr->ausdruck());
 
-        if (aus->art() == Operand::OPND_REG)
+        if (aus->art() == Vm::Operand::OPND_REG)
         {
-            return Operand::Zgr(aus);
+            return Vm::Operand::Zgr(aus);
         }
-        else if (aus->art() == Operand::OPND_LIT)
+        else if (aus->art() == Vm::Operand::OPND_LIT)
         {
-            return Operand::Adr(aus->als<Operand_Lit *>()->wert());
+            return Vm::Operand::Adr(aus->als<Operand_Lit *>()->wert());
         }
         else
         {
@@ -663,6 +709,69 @@ Semantik::operand_analysieren(Ausdruck *op)
     return nullptr;
 }
 
+Ergebnis<Asm::Operand *, Fehler *>
+Semantik::ausdruck_analysieren(Ausdruck *ausdruck)
+{
+    Asm::Operand *erg = nullptr;
+
+    switch (ausdruck->art())
+    {
+        case Ausdruck::NAME:
+        {
+            auto name = ausdruck->als<Name *>()->name();
+
+            erg = new Asm::Operand(symbol_holen(name));
+        } break;
+
+        case Ausdruck::FELD:
+        {
+            auto *feld = ausdruck->als<Feld *>();
+
+            auto basis = ausdruck_analysieren(feld->basis());
+            if (basis.schlecht())
+            {
+                melden(feld->basis(), basis.fehler());
+
+                return basis.fehler();
+            }
+
+            auto symbol = basis.wert()->symbol()->zone()->suchen(feld->feld());
+
+            if (symbol.schlecht())
+            {
+                melden(feld, symbol.fehler());
+            }
+
+            erg = new Operand(symbol.wert());
+        } break;
+
+        case Ausdruck::KLAMMER:
+        {
+            auto op = ausdruck_analysieren(ausdruck->als<Klammer *>()->ausdruck());
+
+            if (op.schlecht())
+            {
+                melden(ausdruck, op.fehler());
+            }
+
+            erg = op.wert();
+        } break;
+
+        case Ausdruck::VARIABLE:
+        case Ausdruck::REG:
+        case Ausdruck::HEX:
+        case Ausdruck::BIN:
+        case Ausdruck::AUSWERTUNG:
+        case Ausdruck::ALS:
+        case Ausdruck::TEXT:
+        case Ausdruck::ADRESSE:
+        case Ausdruck::BLOCK:
+        default: assert(!"unbekannter ausdruck");
+    }
+
+    return erg;
+}
+
 uint16_t
 Semantik::ausdruck_auswerten(Ausdruck *ausdruck)
 {
@@ -672,9 +781,16 @@ Semantik::ausdruck_auswerten(Ausdruck *ausdruck)
     {
         case Ausdruck::VARIABLE:
         {
-            auto *var = ausdruck->als<Variable *>();
-            auto *sym = symbol_holen(var->name());
-            assert(sym != nullptr);
+            auto *variable = ausdruck->als<Variable *>();
+            auto operand = ausdruck_analysieren(variable->ausdruck());
+
+            if (operand.schlecht())
+            {
+                melden(variable, operand.fehler());
+                return erg;
+            }
+
+            auto *sym = operand.wert()->symbol();
 
             if (sym->art() == Symbol::KONSTANTE)
             {
@@ -710,32 +826,30 @@ Semantik::ausdruck_auswerten(Ausdruck *ausdruck)
         {
             auto *als = ausdruck->als<Als *>();
 
-            auto *sym = symbol_holen(als->schablone());
-            if (sym == nullptr)
+            auto schablone = ausdruck_analysieren(als->schablone());
+            if (schablone.schlecht())
             {
-                assert(!"keine passende schablone gefunden");
+                melden(als->schablone(), schablone.fehler());
+                return erg;
             }
 
-            auto *basis = symbol_holen(als->basis());
-            if (basis == nullptr)
+            auto basis = ausdruck_analysieren(als->variable()->basis());
+            if (basis.schlecht())
             {
-                assert(!"keine passende datenvariable gefunden");
+                melden(als->variable()->basis(), basis.fehler());
+                return erg;
             }
 
-            if (basis->art() != Symbol::DATEN)
-            {
-                assert(!"basis muss vom datentyp data8 data16 sein");
-            }
-
-            auto *schablone = sym->als<Symbol_Schablone *>();
-            auto *feld = schablone->felder()[als->feld()];
-
+            auto *feld = schablone.wert()->symbol()->zone()->symbol(als->variable()->feld());
             if (feld == nullptr)
             {
-                assert(!"das gesuchte feld existiert nicht in der schablone");
+                melden(als->variable(), new Fehler("feld nicht gefunden"));
+                return erg;
             }
 
-            erg = basis->als<Symbol_Daten *>()->adresse() + feld->versatz();
+            erg +=
+                basis.wert()->symbol()->als<Symbol_Daten *>()->adresse() +
+                feld->als<Symbol_Feld *>()->versatz();
         } break;
 
         case Ausdruck::BIN:

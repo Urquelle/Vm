@@ -2,8 +2,9 @@
 
 #include <cstdint>
 #include <list>
-#include <string.h>
 
+#include "allgemein/spanne.hpp"
+#include "asm/token.hpp"
 #include "vm/anweisung.hpp"
 
 namespace Asm {
@@ -11,11 +12,23 @@ namespace Asm {
 class Anweisung;
 class Ausdruck;
 class Deklaration;
+class Feld;
 class Hex;
 class Name;
+struct Modul;
 
 struct Ast
 {
+    std::list<Deklaration *> deklarationen;
+    std::list<Anweisung *> anweisungen;
+    std::list<Modul *> module;
+};
+
+struct Modul
+{
+    Spanne spanne;
+    std::string name;
+    uint16_t adresse;
     std::list<Deklaration *> deklarationen;
     std::list<Anweisung *> anweisungen;
 };
@@ -141,7 +154,8 @@ private:
     X(ALS, 8, "Als") \
     X(TEXT, 9, "Text") \
     X(ADRESSE, 10, "Adresse") \
-    X(BLOCK, 11, "Block")
+    X(BLOCK, 11, "Block") \
+    X(FELD, 12, "Feld")
 
 class Ausdruck
 {
@@ -278,14 +292,14 @@ private:
 class Variable : public Ausdruck
 {
 public:
-    Variable(Spanne spanne, std::string name);
+    Variable(Spanne spanne, Ausdruck *ausdruck);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     Ausdruck *kopie() override;
-    std::string name();
+    Ausdruck *ausdruck();
 
 private:
-    std::string _name;
+    Ausdruck *_ausdruck;
 };
 
 class Klammer : public Ausdruck
@@ -305,18 +319,31 @@ private:
 class Als : public Ausdruck
 {
 public:
-    Als(Spanne spanne, std::string schablone, std::string basis, std::string feld);
+    Als(Spanne spanne, Ausdruck *schablone, Feld *variable);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     Ausdruck *kopie() override;
 
-    std::string schablone();
-    std::string basis();
-    std::string feld();
+    Ausdruck * schablone();
+    Feld * variable();
 
 private:
-    std::string _schablone;
-    std::string _basis;
+    Ausdruck * _schablone;
+    Feld * _variable;
+};
+
+class Feld : public Ausdruck
+{
+public:
+    Feld(Spanne spanne, Ausdruck *basis, std::string feld);
+
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
+    Ausdruck *kopie() override;
+
+    Ausdruck * basis();
+    std::string feld();
+private:
+    Ausdruck *_basis;
     std::string _feld;
 };
 // }}}
@@ -381,14 +408,18 @@ private:
 class Anweisung_Import : public Anweisung
 {
 public:
-    Anweisung_Import(Spanne spanne, std::string modul);
+    Anweisung_Import(Spanne spanne, std::string zone, uint16_t start_adresse, std::string modul);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     Anweisung *kopie() override;
 
+    std::string zone();
     std::string modul();
+    uint16_t    start_adresse();
 
 private:
+    std::string _zone;
+    uint16_t _start_adresse;
     std::string _modul;
 };
 

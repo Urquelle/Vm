@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string>
 #include <vector>
 
 #include "allgemein/ergebnis.hpp"
@@ -38,7 +37,8 @@ public:
     Asm::Anweisung   * makro_anweisung_einlesen();
     Asm::Anweisung   * markierung_anweisung_einlesen();
     Asm::Anweisung   * asm_anweisung_einlesen();
-    Asm::Deklaration * daten_dekl_einlesen(uint32_t z_daten, bool exportieren);
+    Asm::Deklaration * konst_dekl_einlesen(bool exportieren);
+    Asm::Deklaration * daten_dekl_einlesen(uint32_t größe, bool exportieren);
     Asm::Deklaration * schablone_dekl_einlesen(bool exportieren);
     Asm::Deklaration * makro_dekl_einlesen(bool exportieren);
 
@@ -46,6 +46,7 @@ public:
     Asm::Ausdruck * operand_einlesen();
     Asm::Ausdruck * plus_ausdruck_einlesen();
     Asm::Ausdruck * mult_ausdruck_einlesen();
+    Asm::Ausdruck * feld_ausdruck_einlesen();
     Asm::Ausdruck * basis_ausdruck_einlesen();
 
     template<typename T>
@@ -65,6 +66,8 @@ public:
     void melden(Spanne spanne, Fehler *fehler);
     void melden(Token *token, Fehler *fehler);
     void melden(Ausdruck *ausdruck, Fehler *fehler);
+    void melden(Deklaration *deklaration, Fehler *fehler);
+    void melden(Anweisung *anweisung, Fehler *fehler);
 
 private:
     std::vector<Token *> _token;

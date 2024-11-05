@@ -1,8 +1,11 @@
 #include "asm/ast.hpp"
 
-#include "ast.hpp"
-#include "vm/cpu.hpp"
+#include <cassert>
 #include <string>
+#include <format>
+
+#include "asm/ast.hpp"
+#include "vm/cpu.hpp"
 
 char * Ast_Namen(Asm::Deklaration::Art art);
 char * Ast_Namen(Asm::Ausdruck::Art art);
@@ -212,11 +215,10 @@ T Ausdruck::als()
     return static_cast<T> (this);
 }
 
-Als::Als(Spanne spanne, std::string schablone, std::string basis, std::string feld)
+Als::Als(Spanne spanne, Ausdruck *schablone, Feld *variable)
     : Ausdruck(Ausdruck::ALS, spanne)
     , _schablone(schablone)
-    , _basis(basis)
-    , _feld(feld)
+    , _variable(variable)
 {
 }
 
@@ -225,32 +227,28 @@ Als::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
     Einschub_Ausgeben(tiefe, ausgabe);
     ausgabe << Ast_Namen(art()) << std::endl;
+    _schablone->ausgeben(tiefe+1, ausgabe);
+    _variable->ausgeben(tiefe+1, ausgabe);
 }
 
 Ausdruck *
 Als::kopie()
 {
-    Als *erg = new Als(spanne(), _schablone, _basis, _feld);
+    Als *erg = new Als(spanne(), _schablone, _variable);
 
     return erg;
 }
 
-std::string
+Ausdruck *
 Als::schablone()
 {
     return _schablone;
 }
 
-std::string
-Als::basis()
+Feld *
+Als::variable()
 {
-    return _basis;
-}
-
-std::string
-Als::feld()
-{
-    return _feld;
+    return _variable;
 }
 
 Bin::Bin(Spanne spanne, Token *op, Ausdruck *links, Ausdruck *rechts)
@@ -472,9 +470,9 @@ Auswertung::ausdruck()
     return _ausdruck;
 }
 
-Variable::Variable(Spanne spanne, std::string name)
+Variable::Variable(Spanne spanne, Ausdruck *ausdruck)
     : Ausdruck(Ausdruck::VARIABLE, spanne)
-    , _name(name)
+    , _ausdruck(ausdruck)
 {
 }
 
@@ -482,21 +480,22 @@ void
 Variable::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
     Einschub_Ausgeben(tiefe, ausgabe);
-    ausgabe << Ast_Namen(art()) << ": " << _name << std::endl;
+    ausgabe << Ast_Namen(art()) << std::endl;
+    _ausdruck->ausgeben(tiefe+1, ausgabe);
 }
 
 Ausdruck *
 Variable::kopie()
 {
-    Variable *erg = new Variable(spanne(), _name);
+    Variable *erg = new Variable(spanne(), _ausdruck);
 
     return erg;
 }
 
-std::string
-Variable::name()
+Ausdruck *
+Variable::ausdruck()
 {
-    return _name;
+    return _ausdruck;
 }
 
 Hex::Hex(Spanne spanne, uint16_t wert)
@@ -524,6 +523,48 @@ Hex::kopie()
     Hex *erg = new Hex(spanne(), _wert);
 
     return erg;
+}
+
+Feld::Feld(Spanne spanne, Ausdruck *basis, std::string feld)
+    : Ausdruck(Ausdruck::FELD, spanne)
+    , _basis(basis)
+    , _feld(feld)
+{
+}
+
+void
+Feld::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
+{
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << std::endl;
+
+    Einschub_Ausgeben(tiefe+1, ausgabe);
+    ausgabe << "Basis" << std::endl;
+
+    _basis->ausgeben(tiefe+1, ausgabe);
+
+    Einschub_Ausgeben(tiefe+1, ausgabe);
+    ausgabe << "Feld: " << _feld;
+}
+
+Ausdruck *
+Feld::kopie()
+{
+    Feld *erg = new Feld(spanne(), _basis, _feld);
+
+    return erg;
+}
+
+Ausdruck *
+Feld::basis()
+{
+    return _basis;
+}
+
+std::string
+Feld::feld()
+{
+    return _feld;
 }
 // }}}
 // anweisung {{{
@@ -733,8 +774,10 @@ Anweisung_Markierung::name()
     return _name;
 }
 
-Anweisung_Import::Anweisung_Import(Spanne spanne, std::string modul)
+Anweisung_Import::Anweisung_Import(Spanne spanne, std::string zone, uint16_t start_adresse, std::string modul)
     : Anweisung(Anweisung::IMPORT, spanne)
+    , _zone(zone)
+    , _start_adresse(start_adresse)
     , _modul(modul)
 {
 }
@@ -749,9 +792,21 @@ Anweisung_Import::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 Anweisung *
 Anweisung_Import::kopie()
 {
-    Anweisung_Import *erg = new Anweisung_Import(spanne(), _modul);
+    Anweisung_Import *erg = new Anweisung_Import(spanne(), _zone, _start_adresse, _modul);
 
     return erg;
+}
+
+std::string
+Anweisung_Import::zone()
+{
+    return _zone;
+}
+
+uint16_t
+Anweisung_Import::start_adresse()
+{
+    return _start_adresse;
 }
 
 std::string

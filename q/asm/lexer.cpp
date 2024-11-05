@@ -1,7 +1,7 @@
 #include "asm/lexer.hpp"
 
-#include <cctype>
-#include <cstdint>
+#include "allgemein/spanne.hpp"
+#include "allgemein/zeichen.hpp"
 
 namespace Asm {
 
@@ -131,8 +131,7 @@ Lexer::starten()
             erg.push_back(Token::Pisa_Links(Spanne(anfang, z)));
         }
 
-        // INFO: '$'
-        else if (z == 36)
+        else if (z == '#')
         {
             z = weiter();
             if (z.c() >= '0' && z.c() <= '9' || z.c() >= 'a' && z.c() <= 'f' || z.c() >= 'A' && z.c() <= 'F')
@@ -155,7 +154,6 @@ Lexer::starten()
             }
             else
             {
-                // AUFGABE: Raute ist hier nicht mehr korrekt
                 erg.push_back(Token::Raute(Spanne(anfang, z)));
             }
         }
@@ -168,11 +166,6 @@ Lexer::starten()
         {
             weiter();
             erg.push_back(Token::Klammeraffe(Spanne(anfang, z)));
-        }
-        else if (z == '#')
-        {
-            weiter();
-            erg.push_back(Token::Raute(Spanne(anfang, z)));
         }
         else if (z == ':')
         {

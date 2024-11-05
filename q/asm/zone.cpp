@@ -1,5 +1,7 @@
 #include "zone.hpp"
 
+#include <format>
+
 namespace Asm {
 
 Zone::Zone()
@@ -66,7 +68,7 @@ Zone::symbol(std::string name)
     return erg;
 }
 
-Ergebnis<Symbol *>
+Ergebnis<Symbol *, Fehler *>
 Zone::suchen(std::string name)
 {
     Zone *zone = this;
@@ -77,13 +79,13 @@ Zone::suchen(std::string name)
         sym = zone->symbol(name);
         if (sym != nullptr)
         {
-            return Ergebnis(sym);
+            return Ergebnis<Symbol *, Fehler *>(sym);
         }
 
         zone = zone->über();
     }
 
-    return Ergebnis<Symbol *>(Fehler(std::format("symbol '{}' wurde nicht gefunden.", name)));
+    return Ergebnis<Symbol *, Fehler *>(new Fehler(std::format("symbol '{}' wurde nicht gefunden.", name)));
 }
 
 }

@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <format>
 
 namespace Vm {
 
@@ -142,11 +143,21 @@ Cpu::lesen2()
 void
 Cpu::ausgeben()
 {
-    std::cout << "+------------ CPU ---------------+" << std::endl;
-    std::cout << "| R1: 0x" << std::hex << regs[REG_R1] << " | R2: 0x" << regs[REG_R2] << " |" << std::endl;
-    std::cout << "| R3: 0x" << std::hex << regs[REG_R3] << " | R4: 0x" << std::hex << regs[REG_R4] << " | R5: 0x" << regs[REG_R5] << " |" << std::endl;
-    std::cout << "| R6: 0x" << std::hex << regs[REG_R6] << " | R7: 0x" << std::hex << regs[REG_R7] << std::endl;
-    std::cout << "+--------------------------------+" << std::endl;
+    auto &ausgabe = std::cout;
+
+    ausgabe << "+------------ CPU ---------------+";
+    ausgabe << std::endl;
+    ausgabe << std::format(" | R1: {:#04X}", regs[REG_R1]);
+    ausgabe << std::format(" | R2: {:#04X}", regs[REG_R2]);
+    ausgabe << " |" << std::endl;
+    ausgabe << std::format(" | R3: {:#04X}", regs[REG_R3]);
+    ausgabe << std::format(" | R4: {:#04X}", regs[REG_R4]);
+    ausgabe << std::format(" | R5: {:#04X}", regs[REG_R5]);
+    ausgabe << " |" << std::endl;
+    ausgabe << std::format(" | R6: {:#04X}", regs[REG_R6]);
+    ausgabe << std::format(" | R7: {:#04X}", regs[REG_R7]);
+    ausgabe << std::endl;
+    ausgabe << "+--------------------------------+" << std::endl;
 }
 
 }

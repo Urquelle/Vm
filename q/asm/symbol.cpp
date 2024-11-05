@@ -1,5 +1,4 @@
 #include "asm/symbol.hpp"
-#include "symbol.hpp"
 
 namespace Asm {
 
@@ -76,16 +75,10 @@ Symbol_Anweisung::adresse()
     return _adresse;
 }
 
-Symbol_Schablone::Symbol_Schablone(std::string name, std::map<std::string, Symbol_Schablone::Feld *> felder)
+Symbol_Schablone::Symbol_Schablone(std::string name, Zone *zone)
     : Symbol(Symbol::SCHABLONE, name)
-    , _felder(felder)
 {
-}
-
-std::map<std::string, Symbol_Schablone::Feld *>
-Symbol_Schablone::felder()
-{
-    return _felder;
+    zone_setzen(zone);
 }
 
 Symbol_Makro::Symbol_Makro(std::string name, Deklaration_Makro *dekl)
@@ -125,6 +118,7 @@ Symbol_Platzhalter::ausdruck()
 
 Symbol_Markierung::Symbol_Markierung(std::string name, uint16_t adresse)
     : Symbol(Symbol::MARKIERUNG, name)
+    , _adresse(adresse)
 {
 }
 
@@ -132,6 +126,37 @@ uint16_t
 Symbol_Markierung::adresse()
 {
     return _adresse;
+}
+
+Symbol_Modul::Symbol_Modul(std::string name, Modul *modul)
+    : Symbol(Symbol::MODUL, name)
+    , _modul(modul)
+{
+}
+
+Modul *
+Symbol_Modul::modul() const
+{
+    return _modul;
+}
+
+Symbol_Feld::Symbol_Feld(std::string name, uint16_t versatz, uint16_t größe)
+    : Symbol(Symbol::FELD, name)
+    , _versatz(versatz)
+    , _größe(größe)
+{
+}
+
+uint16_t
+Symbol_Feld::versatz()
+{
+    return _versatz;
+}
+
+uint16_t
+Symbol_Feld::größe()
+{
+    return _größe;
 }
 
 }

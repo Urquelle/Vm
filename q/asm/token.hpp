@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <ostream>
 
-#include "allgemein/zeichen.hpp"
+#include "allgemein/spanne.hpp"
 #include "allgemein/position.hpp"
 
 #define Token_Liste \
@@ -15,8 +15,8 @@
     X(ECKIGE_KLAMMER_ZU, 5, "]") \
     X(GESCHWEIFTE_KLAMMER_AUF, 6, "{") \
     X(GESCHWEIFTE_KLAMMER_ZU, 7, "}") \
-    X(GROESSER, 8, ">") \
-    X(GROESSER_GLEICH, 9, ">=") \
+    X(GRÖSSER, 8, ">") \
+    X(GRÖSSER_GLEICH, 9, ">=") \
     X(KLEINER, 10, "<") \
     X(KLEINER_GLEICH, 11, "<=") \
     X(GLEICH, 12, "=") \

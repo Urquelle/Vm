@@ -16,6 +16,7 @@
 #include "asm/syntax.cpp"
 #include "asm/symbol.cpp"
 #include "asm/zone.cpp"
+#include "asm/operand.cpp"
 #include "asm/semantik.cpp"
 #include "asm/emitter.cpp"
 
@@ -44,7 +45,7 @@ int main(int argc, char **argv)
 #ifdef ASM_TOKEN_AUSGEBEN
     for (auto token : tokens)
     {
-        token->ausgeben();
+        token->ausgeben(std::cout);
         printf("\n");
     }
 #endif
@@ -64,6 +65,25 @@ int main(int argc, char **argv)
     {
         knoten->ausgeben(0, std::cout);
         printf("\n");
+    }
+
+    for (auto *modul : ast.module)
+    {
+        std::cout << "Modul: " << modul->name << "@" << std::format("{:#04X}", modul->adresse) << std::endl;
+
+        std::cout << "Deklarationen\n";
+        for (auto *deklaration : modul->deklarationen)
+        {
+            deklaration->ausgeben(1, std::cout);
+            printf("\n");
+        }
+
+        std::cout << "Anweisungen\n";
+        for (auto *anweisung : modul->anweisungen)
+        {
+            anweisung->ausgeben(1, std::cout);
+            printf("\n");
+        }
     }
 #endif
 
