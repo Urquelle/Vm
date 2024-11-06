@@ -172,7 +172,8 @@ private:
     X(TEXT, 9, "Text") \
     X(ADRESSE, 10, "Adresse") \
     X(BLOCK, 11, "Block") \
-    X(FELD, 12, "Feld")
+    X(FELD, 12, "Feld") \
+    X(GANZZAHL, 13, "Ganzzahl")
 
 class Ausdruck
 {
@@ -290,6 +291,22 @@ public:
 
 private:
     uint16_t _wert;
+};
+
+class Ausdruck_Ganzzahl : public Ausdruck
+{
+public:
+    Ausdruck_Ganzzahl(Spanne spanne, uint16_t wert, uint16_t basis = 10);
+
+    void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
+    Ausdruck *kopie() override;
+
+    uint16_t wert() const;
+    uint16_t basis() const;
+
+private:
+    uint16_t _wert;
+    uint16_t _basis;
 };
 
 class Ausdruck_Text : public Ausdruck

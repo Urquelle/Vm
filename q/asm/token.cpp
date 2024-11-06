@@ -336,6 +336,12 @@ Token_Ganzzahl::zahl()
     return _zahl;
 }
 
+uint16_t
+Token_Ganzzahl::basis()
+{
+    return _basis;
+}
+
 void
 Token_Ganzzahl::ausgeben(std::ostream &ausgabe)
 {

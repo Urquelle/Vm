@@ -288,6 +288,7 @@ Lexer::starten()
         else if (std::isdigit(z.c()))
         {
             uint32_t wert = 0;
+
             while (z.c() >= '0' && z.c() <= '9' || z.c() >= 'a' && z.c() <= 'f' || z.c() >= 'A' && z.c() <= 'F')
             {
                 if (z == '_')
@@ -302,14 +303,11 @@ Lexer::starten()
                 z = weiter();
             }
 
-            erg.push_back(Token::Hex(Spanne(anfang, z), wert));
-
- #if 0
             if (z == 'b')
             {
                 z = weiter();
-                uint32_t basis = zahl;
-                zahl = 0;
+                uint32_t basis = wert;
+                wert = 0;
 
                 while (std::isalnum(z.c()) || z == '_')
                 {
@@ -321,8 +319,8 @@ Lexer::starten()
 
                     if (z.c() >= '0' && z.c() <= '9' || z.c() >= 'a' && z.c() <= 'f' || z.c() >= 'A' && z.c() <= 'F')
                     {
-                        zahl *= basis;
-                        zahl += ziffern[z.c()];
+                        wert *= basis;
+                        wert += ziffern[z.c()];
                         z = weiter();
                     }
                     else
@@ -331,13 +329,12 @@ Lexer::starten()
                     }
                 }
 
-                erg.push_back(Token::Ganzzahl(anfang, z, zahl));
+                erg.push_back(Token::Ganzzahl(Spanne(anfang, z), wert, basis));
             }
             else
             {
-                erg.push_back(Token::Ganzzahl(anfang, z, zahl));
+                erg.push_back(Token::Hex(Spanne(anfang, z), wert));
             }
- #endif
         }
     }
 

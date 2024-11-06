@@ -669,6 +669,13 @@ Semantik::operand_analysieren(Ausdruck *op)
         return Vm::Operand::Lit(wert);
     }
 
+    else if (op->art() == Ausdruck::GANZZAHL)
+    {
+        auto wert = op->als<Ausdruck_Ganzzahl *>()->wert();
+
+        return Vm::Operand::Lit(wert);
+    }
+
     else if (op->art() == Ausdruck::AUSWERTUNG)
     {
         uint16_t wert = ausdruck_auswerten(op->als<Ausdruck_Auswertung *>()->ausdruck());
@@ -764,6 +771,7 @@ Semantik::ausdruck_analysieren(Ausdruck *ausdruck)
         case Ausdruck::BIN:
         case Ausdruck::REG:
         case Ausdruck::HEX:
+        case Ausdruck::GANZZAHL:
         case Ausdruck::AUSWERTUNG:
         case Ausdruck::ALS:
         case Ausdruck::TEXT:
@@ -821,6 +829,14 @@ Semantik::ausdruck_auswerten(Ausdruck *ausdruck)
         {
             auto *hex = ausdruck->als<Ausdruck_Hex *>();
             auto wert = hex->wert();
+
+            erg = wert;
+        } break;
+
+        case Ausdruck::GANZZAHL:
+        {
+            auto *ganzzahl = ausdruck->als<Ausdruck_Ganzzahl *>();
+            auto wert = ganzzahl->wert();
 
             erg = wert;
         } break;

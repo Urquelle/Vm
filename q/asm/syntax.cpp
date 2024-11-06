@@ -481,7 +481,11 @@ Syntax::basis_ausdruck_einlesen()
 
         case Token::GANZZAHL:
         {
-            /*return new Ganzzahl(weiter());*/
+            auto *token = weiter();
+            return new Ausdruck_Ganzzahl(
+                token->spanne(),
+                token->als<Token_Ganzzahl *>()->zahl(),
+                token->als<Token_Ganzzahl *>()->basis());
         } break;
 
         case Token::RUNDE_KLAMMER_AUF:

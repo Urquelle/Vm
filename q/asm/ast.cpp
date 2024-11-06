@@ -575,6 +575,40 @@ Ausdruck_Hex::kopie()
     return erg;
 }
 
+Ausdruck_Ganzzahl::Ausdruck_Ganzzahl(Spanne spanne, uint16_t wert, uint16_t basis)
+    : Ausdruck(Ausdruck::GANZZAHL, spanne)
+    , _wert(wert)
+    , _basis(basis)
+{
+}
+
+uint16_t
+Ausdruck_Ganzzahl::wert() const
+{
+    return _wert;
+}
+
+uint16_t
+Ausdruck_Ganzzahl::basis() const
+{
+    return _basis;
+}
+
+void
+Ausdruck_Ganzzahl::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
+{
+    Einschub_Ausgeben(tiefe, ausgabe);
+    ausgabe << Ast_Namen(art()) << " " << std::format("{}b{}", _basis, _wert) << std::endl;
+}
+
+Ausdruck *
+Ausdruck_Ganzzahl::kopie()
+{
+    Ausdruck_Ganzzahl *erg = new Ausdruck_Ganzzahl(spanne(), _wert, _basis);
+
+    return erg;
+}
+
 Ausdruck_Feld::Ausdruck_Feld(Spanne spanne, Ausdruck *basis, std::string feld)
     : Ausdruck(Ausdruck::FELD, spanne)
     , _basis(basis)
