@@ -17,7 +17,7 @@ Vermittler::finden(uint16_t adresse)
         }
     }
 
-    return Fehler("keine passende region gefunden");
+    return new Fehler("keine passende region gefunden");
 }
 
 Ergebnis<uint16_t>

@@ -30,7 +30,7 @@ Arbeitsspeicher::lesen_1byte(uint16_t adresse)
 {
     if (adresse < 0 || adresse >= _vol)
     {
-        return Ergebnis<uint8_t>(Fehler("adresse außerhalb des gültigen bereichs"));
+        return Ergebnis<uint8_t>(new Fehler("adresse außerhalb des gültigen bereichs"));
     }
 
     auto erg = _daten[adresse];

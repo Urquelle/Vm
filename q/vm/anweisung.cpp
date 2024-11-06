@@ -1543,7 +1543,7 @@ Anweisung::Kodieren(Laufwerk *speicher, uint16_t op, std::vector<Operand *> oper
         case OP_RTI        :  return Anweisung_Rti ::Kodieren(speicher, operanden, adresse);
         case OP_BRK        :  return Anweisung_Brk ::Kodieren(speicher, operanden, adresse);
 
-        default:              return Ergebnis<uint8_t>(Fehler());
+        default:              return Ergebnis<uint8_t>(new Fehler("unbekannte anweisung"));
     }
 }
 
@@ -1576,7 +1576,7 @@ Anweisung_Add::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 2)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[0]->art() == Operand::OPND_REG)
@@ -1605,7 +1605,7 @@ Anweisung_Add::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
         }
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -1619,7 +1619,7 @@ Anweisung_Sub::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 2)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[0]->art() == Operand::OPND_REG)
@@ -1662,7 +1662,7 @@ Anweisung_Sub::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
         }
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -1676,7 +1676,7 @@ Anweisung_Mul::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 2)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[0]->art() == Operand::OPND_REG)
@@ -1705,7 +1705,7 @@ Anweisung_Mul::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
         }
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -1719,7 +1719,7 @@ Anweisung_Inc::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 1)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[0]->art() == Operand::OPND_REG)
@@ -1730,7 +1730,7 @@ Anweisung_Inc::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
         return 2;
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -1744,7 +1744,7 @@ Anweisung_Dec::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 1)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[0]->art() == Operand::OPND_REG)
@@ -1755,7 +1755,7 @@ Anweisung_Dec::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
         return 2;
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -1769,7 +1769,7 @@ Anweisung_Lsf::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 2)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[1]->art() == Operand::OPND_REG)
@@ -1789,7 +1789,7 @@ Anweisung_Lsf::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
         return 4;
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -1803,7 +1803,7 @@ Anweisung_Rsf::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 2)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[1]->art() == Operand::OPND_REG)
@@ -1823,7 +1823,7 @@ Anweisung_Rsf::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
         return 4;
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -1837,7 +1837,7 @@ Anweisung_And::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 2)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[1]->art() == Operand::OPND_REG)
@@ -1857,7 +1857,7 @@ Anweisung_And::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
         return 4;
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -1871,7 +1871,7 @@ Anweisung_Or::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, uin
 {
     if (operanden.size() < 2)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[1]->art() == Operand::OPND_REG)
@@ -1891,7 +1891,7 @@ Anweisung_Or::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, uin
         return 4;
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -1905,7 +1905,7 @@ Anweisung_Xor::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 2)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[1]->art() == Operand::OPND_REG)
@@ -1925,7 +1925,7 @@ Anweisung_Xor::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
         return 4;
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -1939,13 +1939,13 @@ Anweisung_Not::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 1)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     IF_SCHREIBE(speicher->schreiben_1byte(adresse, OP_NOT));
     IF_SCHREIBE(speicher->schreiben_1byte(adresse + 1, operanden[0]->als<Operand_Reg *>()->wert()));
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -1959,7 +1959,7 @@ Anweisung_Mov::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 1)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[0]->art() == Operand::OPND_REG)
@@ -2000,7 +2000,7 @@ Anweisung_Mov::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
         }
         else
         {
-            return Fehler("unbekannte anweisung");
+            return new Fehler("unbekannte anweisung");
         }
     }
     else if (operanden[0]->art() == Operand::OPND_ADR)
@@ -2023,15 +2023,15 @@ Anweisung_Mov::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
         }
         else
         {
-            return Fehler("unbekannte anweisung");
+            return new Fehler("unbekannte anweisung");
         }
     }
     else
     {
-        return Fehler("unbekannte anweisung");
+        return new Fehler("unbekannte anweisung");
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -2052,7 +2052,7 @@ Anweisung_Push::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, u
 {
     if (operanden.size() < 1)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[0]->art() == Operand::OPND_LIT)
@@ -2070,7 +2070,7 @@ Anweisung_Push::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, u
         return 2;
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -2084,7 +2084,7 @@ Anweisung_Pop::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 1)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     IF_SCHREIBE(speicher->schreiben_1byte(adresse, OP_POP));
@@ -2104,7 +2104,7 @@ Anweisung_Jne::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 2)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[0]->art() == Operand::OPND_LIT)
@@ -2130,7 +2130,7 @@ Anweisung_Jne::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
         return 4;
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -2144,7 +2144,7 @@ Anweisung_Jeq::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 2)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[0]->art() == Operand::OPND_LIT)
@@ -2170,7 +2170,7 @@ Anweisung_Jeq::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
         return 4;
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -2184,7 +2184,7 @@ Anweisung_Jlt::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 2)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[0]->art() == Operand::OPND_LIT)
@@ -2210,7 +2210,7 @@ Anweisung_Jlt::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
         return 4;
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -2224,7 +2224,7 @@ Anweisung_Jgt::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 2)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[0]->art() == Operand::OPND_LIT)
@@ -2250,7 +2250,7 @@ Anweisung_Jgt::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
         return 4;
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -2264,7 +2264,7 @@ Anweisung_Jle::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 2)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[0]->art() == Operand::OPND_LIT)
@@ -2290,7 +2290,7 @@ Anweisung_Jle::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
         return 4;
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -2304,7 +2304,7 @@ Anweisung_Jge::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 2)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[0]->art() == Operand::OPND_LIT)
@@ -2330,7 +2330,7 @@ Anweisung_Jge::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
         return 4;
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -2344,7 +2344,7 @@ Anweisung_Cal::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 1)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     if (operanden[0]->art() == Operand::OPND_REG)
@@ -2366,7 +2366,7 @@ Anweisung_Cal::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
         return 3;
     }
 
-    return Fehler("unbekannte anweisung");
+    return new Fehler("unbekannte anweisung");
 }
 
 void
@@ -2394,7 +2394,7 @@ Anweisung_Int::Kodieren(Laufwerk *speicher, std::vector<Operand *> operanden, ui
 {
     if (operanden.size() < 1)
     {
-        return Fehler("zu wenig argumente");
+        return new Fehler("zu wenig argumente");
     }
 
     auto wert = operanden[0]->als<Operand_Lit *>()->wert();

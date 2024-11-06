@@ -42,7 +42,7 @@ public:
     Anweisung * brk_analysieren(Asm::Anweisung_Asm *anweisung);
 
     uint16_t       ausdruck_auswerten(Ausdruck *ausdruck);
-    Ergebnis<Asm::Operand *, Fehler *> ausdruck_analysieren(Ausdruck *ausdruck);
+    Ergebnis<Asm::Operand *> ausdruck_analysieren(Ausdruck *ausdruck);
 
     Vm::Operand * operand_analysieren(Ausdruck *op);
 

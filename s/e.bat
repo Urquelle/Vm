@@ -13,7 +13,7 @@ pushd %E%
 
 cls
 
-rem cl %ccflags% %PP%\b\prog.cpp -Fevm.exe /link %ldflags%
+rem cl %ccflags% %PP%\b\prog.cpp -Feprog.exe /link %ldflags%
 rem cl %ccflags% %PP%\b\bank.cpp -Febank.exe /link %ldflags%
 rem cl %ccflags% %PP%\b\konsole.cpp -Fekonsole.exe /link %ldflags%
 cl %ccflags% /DASM_AST_AUSGEBEN %PP%\b\asm.cpp -Feasm.exe /link %ldflags%

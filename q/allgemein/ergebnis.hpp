@@ -2,7 +2,7 @@
 
 #include "fehler.hpp"
 
-template <typename TWert, typename FWert = Fehler>
+template <typename TWert, typename FWert = Fehler *>
 class Ergebnis
 {
 public:

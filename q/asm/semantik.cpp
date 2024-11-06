@@ -709,7 +709,7 @@ Semantik::operand_analysieren(Ausdruck *op)
     return nullptr;
 }
 
-Ergebnis<Asm::Operand *, Fehler *>
+Ergebnis<Asm::Operand *>
 Semantik::ausdruck_analysieren(Ausdruck *ausdruck)
 {
     Asm::Operand *erg = nullptr;
@@ -736,7 +736,6 @@ Semantik::ausdruck_analysieren(Ausdruck *ausdruck)
             }
 
             auto symbol = basis.wert()->symbol()->zone()->suchen(feld->feld());
-
             if (symbol.schlecht())
             {
                 melden(feld, symbol.fehler());
@@ -758,9 +757,9 @@ Semantik::ausdruck_analysieren(Ausdruck *ausdruck)
         } break;
 
         case Ausdruck::VARIABLE:
+        case Ausdruck::BIN:
         case Ausdruck::REG:
         case Ausdruck::HEX:
-        case Ausdruck::BIN:
         case Ausdruck::AUSWERTUNG:
         case Ausdruck::ALS:
         case Ausdruck::TEXT:
