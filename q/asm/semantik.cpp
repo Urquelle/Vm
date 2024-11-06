@@ -46,7 +46,7 @@ Semantik::melden(Token *token, Fehler *fehler)
 void
 Semantik::melden(Modul *modul, Fehler *fehler)
 {
-    melden(modul->spanne, fehler);
+    melden(modul->spanne(), fehler);
 }
 
 Zone *
@@ -89,20 +89,20 @@ Semantik::module_importieren()
 {
     for (auto *modul : _ast.module)
     {
-        Symbol *sym = new Symbol_Modul(modul->name, modul);
-        sym->zone_setzen(new Zone(modul->name));
+        Symbol *sym = new Symbol_Modul(modul->name(), modul);
+        sym->zone_setzen(new Zone(modul->name()));
 
-        if (!symbol_registrieren(modul->name, sym))
+        if (!symbol_registrieren(modul->name(), sym))
         {
-            melden(modul, new Fehler(std::format("modul {} konnte nicht importiert werden", modul->name)));
+            melden(modul, new Fehler(std::format("modul {} konnte nicht importiert werden", modul->name())));
         }
 
         Semantik semantik = Semantik({
-            .deklarationen = modul->deklarationen,
-            .anweisungen = modul->anweisungen
+            .deklarationen = modul->deklarationen(),
+            .anweisungen = modul->anweisungen()
         });
 
-        auto ast = semantik.starten(modul->adresse);
+        auto ast = semantik.starten(modul->adresse());
 
         for (auto *deklaration : ast.deklarationen)
         {
@@ -133,36 +133,36 @@ Semantik::makros_registrieren()
 
         auto *makro_dekl = dekl->als<Deklaration_Makro *>();
 
-        auto *vorhandenes_symbol = symbol_holen(makro_dekl->name());
-        if (vorhandenes_symbol != nullptr)
+        if (symbol_holen(makro_dekl->name()) != nullptr)
         {
             melden(makro_dekl->spanne(), new Fehler(std::format("makro '{}' bereits vorhanden", makro_dekl->name())));
+
+            return;
         }
 
-        if (vorhandenes_symbol == nullptr)
-        {
-            auto *sym = new Symbol_Makro(makro_dekl->name(), makro_dekl);
-            sym->zone_setzen(new Zone(makro_dekl->name(), _zone));
+        auto *sym = new Symbol_Makro(makro_dekl->name(), makro_dekl);
+        sym->zone_setzen(new Zone(makro_dekl->name(), _zone));
 
-            if (!symbol_registrieren(makro_dekl->name(), sym))
+        if (!symbol_registrieren(makro_dekl->name(), sym))
+        {
+            melden(makro_dekl->spanne(), new Fehler(std::format("makro '{}' konnte nicht registriert werden.", makro_dekl->name())));
+
+            return;
+        }
+
+        // INFO: makro parameter in zone registrieren
+        for (auto *param : makro_dekl->parameter())
+        {
+            if (sym->zone()->registriert(param->name()))
             {
-                melden(makro_dekl->spanne(), new Fehler(std::format("makro '{}' konnte nicht registriert werden.", makro_dekl->name())));
+                melden(param, new Fehler(std::format("das makro {} enthält bereits einen parameter {}",
+                    makro_dekl->name(), param->name())));
             }
 
-            // INFO: makro parameter in zone registrieren
-            for (auto *param : makro_dekl->parameter())
+            auto *param_sym = new Symbol_Platzhalter(param->name());
+            if (!sym->zone()->registrieren(param->name(), param_sym))
             {
-                if (sym->zone()->registriert(param->name()))
-                {
-                    melden(param, new Fehler(std::format("das makro {} enthält bereits einen parameter {}",
-                        makro_dekl->name(), param->name())));
-                }
-
-                auto *param_sym = new Symbol_Platzhalter(param->name());
-                if (!sym->zone()->registrieren(param->name(), param_sym))
-                {
-                    melden(param, new Fehler("konnte symbol nicht registrieren"));
-                }
+                melden(param, new Fehler("konnte symbol nicht registrieren"));
             }
         }
     }
@@ -183,6 +183,8 @@ Semantik::makros_erweitern()
             if (sym == nullptr)
             {
                 melden(a, new Fehler(std::format("unbekanntes makro {}", anweisung->name())));
+
+                continue;
             }
 
             auto *sym_makro = sym->als<Symbol_Makro *>();
@@ -193,6 +195,8 @@ Semantik::makros_erweitern()
                 melden(anweisung, new Fehler(
                     std::format("anzahl der argumente ({}) entspricht nicht der anzahl der parameter ({})",
                                 anweisung->argumente().size(), sym_makro->parameter().size())));
+
+                continue;
             }
 
             // INFO: argumente an die entsprechenden parameter des makros binden, und
@@ -403,7 +407,7 @@ Semantik::anweisung_kopieren(Anweisung *anweisung)
 
                 if (operand->art() == Ausdruck::NAME)
                 {
-                    Symbol *sym = symbol_holen(operand->als<Name *>()->name());
+                    Symbol *sym = symbol_holen(operand->als<Ausdruck_Name *>()->name());
                     assert(sym->art() == Symbol::PLATZHALTER);
                     operanden.push_back(sym->als<Symbol_Platzhalter *>()->ausdruck());
                 }
@@ -655,26 +659,26 @@ Semantik::operand_analysieren(Ausdruck *op)
 
     if (op->art() == Ausdruck::REG)
     {
-        return Vm::Operand::Reg(op->als<Reg *>()->reg());
+        return Vm::Operand::Reg(op->als<Ausdruck_Reg *>()->reg());
     }
 
     else if (op->art() == Ausdruck::HEX)
     {
-        auto wert = op->als<Hex *>()->wert();
+        auto wert = op->als<Ausdruck_Hex *>()->wert();
 
         return Vm::Operand::Lit(wert);
     }
 
     else if (op->art() == Ausdruck::AUSWERTUNG)
     {
-        uint16_t wert = ausdruck_auswerten(op->als<Auswertung *>()->ausdruck());
+        uint16_t wert = ausdruck_auswerten(op->als<Ausdruck_Auswertung *>()->ausdruck());
 
         return Vm::Operand::Lit(wert);
     }
 
     else if (op->art() == Ausdruck::ADRESSE)
     {
-        auto adr = op->als<Adresse *>();
+        auto adr = op->als<Ausdruck_Adresse *>();
         auto aus = operand_analysieren(adr->ausdruck());
 
         if (aus->art() == Vm::Operand::OPND_REG)
@@ -693,7 +697,7 @@ Semantik::operand_analysieren(Ausdruck *op)
 
     else if (op->art() == Ausdruck::NAME)
     {
-        auto *name = op->als<Name *>();
+        auto *name = op->als<Ausdruck_Name *>();
         auto *sym = symbol_holen(name->name());
 
         auto *erg = operand_analysieren(sym->als<Symbol_Platzhalter *>()->ausdruck());
@@ -718,14 +722,14 @@ Semantik::ausdruck_analysieren(Ausdruck *ausdruck)
     {
         case Ausdruck::NAME:
         {
-            auto name = ausdruck->als<Name *>()->name();
+            auto name = ausdruck->als<Ausdruck_Name *>()->name();
 
             erg = new Asm::Operand(symbol_holen(name));
         } break;
 
         case Ausdruck::FELD:
         {
-            auto *feld = ausdruck->als<Feld *>();
+            auto *feld = ausdruck->als<Ausdruck_Feld *>();
 
             auto basis = ausdruck_analysieren(feld->basis());
             if (basis.schlecht())
@@ -746,7 +750,7 @@ Semantik::ausdruck_analysieren(Ausdruck *ausdruck)
 
         case Ausdruck::KLAMMER:
         {
-            auto op = ausdruck_analysieren(ausdruck->als<Klammer *>()->ausdruck());
+            auto op = ausdruck_analysieren(ausdruck->als<Ausdruck_Klammer *>()->ausdruck());
 
             if (op.schlecht())
             {
@@ -780,7 +784,7 @@ Semantik::ausdruck_auswerten(Ausdruck *ausdruck)
     {
         case Ausdruck::VARIABLE:
         {
-            auto *variable = ausdruck->als<Variable *>();
+            auto *variable = ausdruck->als<Ausdruck_Variable *>();
             auto operand = ausdruck_analysieren(variable->ausdruck());
 
             if (operand.schlecht())
@@ -815,7 +819,7 @@ Semantik::ausdruck_auswerten(Ausdruck *ausdruck)
 
         case Ausdruck::HEX:
         {
-            auto *hex = ausdruck->als<Hex *>();
+            auto *hex = ausdruck->als<Ausdruck_Hex *>();
             auto wert = hex->wert();
 
             erg = wert;
@@ -823,7 +827,7 @@ Semantik::ausdruck_auswerten(Ausdruck *ausdruck)
 
         case Ausdruck::ALS:
         {
-            auto *als = ausdruck->als<Als *>();
+            auto *als = ausdruck->als<Ausdruck_Als *>();
 
             auto schablone = ausdruck_analysieren(als->schablone());
             if (schablone.schlecht())
@@ -853,7 +857,7 @@ Semantik::ausdruck_auswerten(Ausdruck *ausdruck)
 
         case Ausdruck::BIN:
         {
-            auto *bin = ausdruck->als<Bin *>();
+            auto *bin = ausdruck->als<Ausdruck_Bin *>();
 
             auto wert_links  = ausdruck_auswerten(bin->links());
             auto wert_rechts = ausdruck_auswerten(bin->rechts());
@@ -890,7 +894,7 @@ Semantik::ausdruck_auswerten(Ausdruck *ausdruck)
 
         case Ausdruck::KLAMMER:
         {
-            auto *klammer = ausdruck->als<Klammer *>();
+            auto *klammer = ausdruck->als<Ausdruck_Klammer *>();
             erg = ausdruck_auswerten(klammer->ausdruck());
         } break;
 

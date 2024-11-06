@@ -93,7 +93,7 @@ Symbol_Makro::dekl()
     return _dekl;
 }
 
-std::vector<Name *>
+std::vector<Ausdruck_Name *>
 Symbol_Makro::parameter()
 {
     return _dekl->parameter();

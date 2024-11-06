@@ -99,7 +99,7 @@ class Symbol_Makro : public Symbol
 public:
     Symbol_Makro(std::string name, Deklaration_Makro *dekl);
 
-    std::vector<Name *> parameter();
+    std::vector<Ausdruck_Name *> parameter();
     Deklaration_Makro *dekl();
 
 private:

@@ -16,6 +16,56 @@ uint32_t Register_Id(const char * name);
 
 namespace Asm {
 
+// modul {{{
+Modul::Modul(Spanne spanne, std::string name, uint16_t adresse)
+    : _spanne(spanne)
+    , _name(name)
+    , _adresse(adresse)
+{
+}
+
+Spanne
+Modul::spanne() const
+{
+    return _spanne;
+}
+
+std::string
+Modul::name() const
+{
+    return _name;
+}
+
+uint16_t
+Modul::adresse() const
+{
+    return _adresse;
+}
+
+std::list<Deklaration *>
+Modul::deklarationen()
+{
+    return _deklarationen;
+}
+
+void
+Modul::deklaration_hinzufügen(Deklaration *deklaration)
+{
+    _deklarationen.push_back(deklaration);
+}
+
+std::list<Anweisung *>
+Modul::anweisungen()
+{
+    return _anweisungen;
+}
+
+void
+Modul::anweisung_hinzufügen(Anweisung *anweisung)
+{
+    _anweisungen.push_back(anweisung);
+}
+// }}}
 // deklaration {{{
 Deklaration::Deklaration(Deklaration::Art art, Spanne spanne, std::string name, bool exportieren)
     : _art(art)
@@ -71,7 +121,7 @@ Deklaration_Konstante::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 }
 
 Deklaration_Daten::Deklaration_Daten(Spanne spanne, uint16_t größe, std::string name,
-                                     uint16_t anzahl, std::vector<Hex *> daten, bool exportieren)
+                                     uint16_t anzahl, std::vector<Ausdruck_Hex *> daten, bool exportieren)
     : Deklaration(Deklaration::DATEN, spanne, name, exportieren)
     , _größe(größe)
     , _anzahl(anzahl)
@@ -113,7 +163,7 @@ Deklaration_Daten::gesamtgröße()
     return erg;
 }
 
-std::vector<Hex *>
+std::vector<Ausdruck_Hex *>
 Deklaration_Daten::daten()
 {
     return _daten;
@@ -139,14 +189,14 @@ Deklaration_Schablone::felder()
 }
 
 Deklaration_Makro::Deklaration_Makro(Spanne spanne, std::string name,
-        std::vector<Name *> parameter, std::vector<Anweisung *> rumpf)
+        std::vector<Ausdruck_Name *> parameter, std::vector<Anweisung *> rumpf)
     : Deklaration(Deklaration::MAKRO, spanne, name)
     , _parameter(parameter)
     , _rumpf(rumpf)
 {
 }
 
-std::vector<Name *>
+std::vector<Ausdruck_Name *>
 Deklaration_Makro::parameter()
 {
     return _parameter;
@@ -215,7 +265,7 @@ T Ausdruck::als()
     return static_cast<T> (this);
 }
 
-Als::Als(Spanne spanne, Ausdruck *schablone, Feld *variable)
+Ausdruck_Als::Ausdruck_Als(Spanne spanne, Ausdruck *schablone, Ausdruck_Feld *variable)
     : Ausdruck(Ausdruck::ALS, spanne)
     , _schablone(schablone)
     , _variable(variable)
@@ -223,7 +273,7 @@ Als::Als(Spanne spanne, Ausdruck *schablone, Feld *variable)
 }
 
 void
-Als::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
+Ausdruck_Als::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
     Einschub_Ausgeben(tiefe, ausgabe);
     ausgabe << Ast_Namen(art()) << std::endl;
@@ -232,26 +282,26 @@ Als::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 }
 
 Ausdruck *
-Als::kopie()
+Ausdruck_Als::kopie()
 {
-    Als *erg = new Als(spanne(), _schablone, _variable);
+    Ausdruck_Als *erg = new Ausdruck_Als(spanne(), _schablone, _variable);
 
     return erg;
 }
 
 Ausdruck *
-Als::schablone()
+Ausdruck_Als::schablone()
 {
     return _schablone;
 }
 
-Feld *
-Als::variable()
+Ausdruck_Feld *
+Ausdruck_Als::variable()
 {
     return _variable;
 }
 
-Bin::Bin(Spanne spanne, Token *op, Ausdruck *links, Ausdruck *rechts)
+Ausdruck_Bin::Ausdruck_Bin(Spanne spanne, Token *op, Ausdruck *links, Ausdruck *rechts)
     : Ausdruck(Ausdruck::BIN, spanne)
     , _op(op)
     , _links(links)
@@ -260,7 +310,7 @@ Bin::Bin(Spanne spanne, Token *op, Ausdruck *links, Ausdruck *rechts)
 }
 
 void
-Bin::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
+Ausdruck_Bin::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
     Einschub_Ausgeben(tiefe, ausgabe);
     ausgabe << Ast_Namen(art()) << std::endl;
@@ -272,92 +322,92 @@ Bin::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 }
 
 Ausdruck *
-Bin::kopie()
+Ausdruck_Bin::kopie()
 {
-    Bin *erg = new Bin(spanne(), _op, _links->kopie(), _rechts->kopie());
+    Ausdruck_Bin *erg = new Ausdruck_Bin(spanne(), _op, _links->kopie(), _rechts->kopie());
 
     return erg;
 }
 
-Name::Name(Spanne spanne, std::string name)
+Ausdruck_Name::Ausdruck_Name(Spanne spanne, std::string name)
     : Ausdruck(Ausdruck::NAME, spanne)
     , _name(name)
 {
 }
 
 void
-Name::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
+Ausdruck_Name::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
     Einschub_Ausgeben(tiefe, ausgabe);
     ausgabe << Ast_Namen(art()) << ": " << _name << std::endl;
 }
 
 Ausdruck *
-Name::kopie()
+Ausdruck_Name::kopie()
 {
-    Name *erg = new Name(spanne(), _name);
+    Ausdruck_Name *erg = new Ausdruck_Name(spanne(), _name);
 
     return erg;
 }
 
 std::string
-Name::name()
+Ausdruck_Name::name()
 {
     return _name;
 }
 
-Reg::Reg(Spanne spanne, std::string name)
+Ausdruck_Reg::Ausdruck_Reg(Spanne spanne, std::string name)
     : Ausdruck(Ausdruck::REG, spanne)
     , _name(name)
 {
 }
 
 void
-Reg::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
+Ausdruck_Reg::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
     Einschub_Ausgeben(tiefe, ausgabe);
     ausgabe << Ast_Namen(art()) << ": " << _name << std::endl;
 }
 
 Ausdruck *
-Reg::kopie()
+Ausdruck_Reg::kopie()
 {
-    Reg *erg = new Reg(spanne(), _name);
+    Ausdruck_Reg *erg = new Ausdruck_Reg(spanne(), _name);
 
     return erg;
 }
 
 uint32_t
-Reg::reg()
+Ausdruck_Reg::reg()
 {
     auto erg = Register_Id(_name.c_str());
 
     return erg;
 }
 
-Text::Text(Spanne spanne, std::string text)
+Ausdruck_Text::Ausdruck_Text(Spanne spanne, std::string text)
     : Ausdruck(Ausdruck::TEXT, spanne)
     , _text(text)
 {
 }
 
 void
-Text::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
+Ausdruck_Text::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
     Einschub_Ausgeben(tiefe, ausgabe);
     ausgabe << Ast_Namen(art()) << ": " << _text << std::endl;
 }
 
 Ausdruck *
-Text::kopie()
+Ausdruck_Text::kopie()
 {
-    Text *erg = new Text(spanne(), _text);
+    Ausdruck_Text *erg = new Ausdruck_Text(spanne(), _text);
 
     return erg;
 }
 
 std::string
-Text::text()
+Ausdruck_Text::text()
 {
     return _text;
 }
@@ -385,20 +435,20 @@ Ganzzahl::wert()
 }
 #endif
 
-Klammer::Klammer(Spanne spanne, Ausdruck *ausdruck)
+Ausdruck_Klammer::Ausdruck_Klammer(Spanne spanne, Ausdruck *ausdruck)
     : Ausdruck(Ausdruck::KLAMMER, spanne)
     , _ausdruck(ausdruck)
 {
 }
 
 Ausdruck *
-Klammer::ausdruck()
+Ausdruck_Klammer::ausdruck()
 {
     return _ausdruck;
 }
 
 void
-Klammer::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
+Ausdruck_Klammer::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
     Einschub_Ausgeben(tiefe, ausgabe);
     ausgabe << Ast_Namen(art()) << std::endl;
@@ -407,21 +457,21 @@ Klammer::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 }
 
 Ausdruck *
-Klammer::kopie()
+Ausdruck_Klammer::kopie()
 {
-    Klammer *erg = new Klammer(spanne(), _ausdruck->kopie());
+    Ausdruck_Klammer *erg = new Ausdruck_Klammer(spanne(), _ausdruck->kopie());
 
     return erg;
 }
 
-Adresse::Adresse(Spanne spanne, Ausdruck *ausdruck)
+Ausdruck_Adresse::Ausdruck_Adresse(Spanne spanne, Ausdruck *ausdruck)
     : Ausdruck(Ausdruck::ADRESSE, spanne)
     , _ausdruck(ausdruck)
 {
 }
 
 void
-Adresse::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
+Ausdruck_Adresse::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
     Einschub_Ausgeben(tiefe, ausgabe);
     ausgabe << Ast_Namen(art()) << std::endl;
@@ -429,27 +479,27 @@ Adresse::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 }
 
 Ausdruck *
-Adresse::kopie()
+Ausdruck_Adresse::kopie()
 {
-    Adresse *erg = new Adresse(spanne(), _ausdruck->kopie());
+    Ausdruck_Adresse *erg = new Ausdruck_Adresse(spanne(), _ausdruck->kopie());
 
     return erg;
 }
 
 Ausdruck *
-Adresse::ausdruck()
+Ausdruck_Adresse::ausdruck()
 {
     return _ausdruck;
 }
 
-Auswertung::Auswertung(Spanne spanne, Ausdruck *ausdruck)
+Ausdruck_Auswertung::Ausdruck_Auswertung(Spanne spanne, Ausdruck *ausdruck)
     : Ausdruck(Ausdruck::AUSWERTUNG, spanne)
     , _ausdruck(ausdruck)
 {
 }
 
 void
-Auswertung::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
+Ausdruck_Auswertung::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
     Einschub_Ausgeben(tiefe, ausgabe);
     ausgabe << Ast_Namen(art()) << std::endl;
@@ -457,27 +507,27 @@ Auswertung::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 }
 
 Ausdruck *
-Auswertung::kopie()
+Ausdruck_Auswertung::kopie()
 {
-    Auswertung *erg = new Auswertung(spanne(), _ausdruck->kopie());
+    Ausdruck_Auswertung *erg = new Ausdruck_Auswertung(spanne(), _ausdruck->kopie());
 
     return erg;
 }
 
 Ausdruck *
-Auswertung::ausdruck()
+Ausdruck_Auswertung::ausdruck()
 {
     return _ausdruck;
 }
 
-Variable::Variable(Spanne spanne, Ausdruck *ausdruck)
+Ausdruck_Variable::Ausdruck_Variable(Spanne spanne, Ausdruck *ausdruck)
     : Ausdruck(Ausdruck::VARIABLE, spanne)
     , _ausdruck(ausdruck)
 {
 }
 
 void
-Variable::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
+Ausdruck_Variable::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
     Einschub_Ausgeben(tiefe, ausgabe);
     ausgabe << Ast_Namen(art()) << std::endl;
@@ -485,47 +535,47 @@ Variable::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 }
 
 Ausdruck *
-Variable::kopie()
+Ausdruck_Variable::kopie()
 {
-    Variable *erg = new Variable(spanne(), _ausdruck);
+    Ausdruck_Variable *erg = new Ausdruck_Variable(spanne(), _ausdruck);
 
     return erg;
 }
 
 Ausdruck *
-Variable::ausdruck()
+Ausdruck_Variable::ausdruck()
 {
     return _ausdruck;
 }
 
-Hex::Hex(Spanne spanne, uint16_t wert)
+Ausdruck_Hex::Ausdruck_Hex(Spanne spanne, uint16_t wert)
     : Ausdruck(Ausdruck::HEX, spanne)
     , _wert(wert)
 {
 }
 
 uint16_t
-Hex::wert()
+Ausdruck_Hex::wert()
 {
     return _wert;
 }
 
 void
-Hex::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
+Ausdruck_Hex::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
     Einschub_Ausgeben(tiefe, ausgabe);
     ausgabe << Ast_Namen(art()) << " " << std::format("{:#06x}", wert()) << std::endl;
 }
 
 Ausdruck *
-Hex::kopie()
+Ausdruck_Hex::kopie()
 {
-    Hex *erg = new Hex(spanne(), _wert);
+    Ausdruck_Hex *erg = new Ausdruck_Hex(spanne(), _wert);
 
     return erg;
 }
 
-Feld::Feld(Spanne spanne, Ausdruck *basis, std::string feld)
+Ausdruck_Feld::Ausdruck_Feld(Spanne spanne, Ausdruck *basis, std::string feld)
     : Ausdruck(Ausdruck::FELD, spanne)
     , _basis(basis)
     , _feld(feld)
@@ -533,7 +583,7 @@ Feld::Feld(Spanne spanne, Ausdruck *basis, std::string feld)
 }
 
 void
-Feld::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
+Ausdruck_Feld::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 {
     Einschub_Ausgeben(tiefe, ausgabe);
     ausgabe << Ast_Namen(art()) << std::endl;
@@ -548,21 +598,21 @@ Feld::ausgeben(uint8_t tiefe, std::ostream &ausgabe)
 }
 
 Ausdruck *
-Feld::kopie()
+Ausdruck_Feld::kopie()
 {
-    Feld *erg = new Feld(spanne(), _basis, _feld);
+    Ausdruck_Feld *erg = new Ausdruck_Feld(spanne(), _basis, _feld);
 
     return erg;
 }
 
 Ausdruck *
-Feld::basis()
+Ausdruck_Feld::basis()
 {
     return _basis;
 }
 
 std::string
-Feld::feld()
+Ausdruck_Feld::feld()
 {
     return _feld;
 }

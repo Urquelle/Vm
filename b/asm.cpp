@@ -69,17 +69,17 @@ int main(int argc, char **argv)
 
     for (auto *modul : ast.module)
     {
-        std::cout << "Modul: " << modul->name << "@" << std::format("{:#04X}", modul->adresse) << std::endl;
+        std::cout << "Modul: " << modul->name() << "@" << std::format("{:#04X}", modul->adresse()) << std::endl;
 
         std::cout << "Deklarationen\n";
-        for (auto *deklaration : modul->deklarationen)
+        for (auto *deklaration : modul->deklarationen())
         {
             deklaration->ausgeben(1, std::cout);
             printf("\n");
         }
 
         std::cout << "Anweisungen\n";
-        for (auto *anweisung : modul->anweisungen)
+        for (auto *anweisung : modul->anweisungen())
         {
             anweisung->ausgeben(1, std::cout);
             printf("\n");

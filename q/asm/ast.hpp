@@ -11,11 +11,11 @@ namespace Asm {
 
 class Anweisung;
 class Ausdruck;
+class Ausdruck_Feld;
+class Ausdruck_Hex;
+class Ausdruck_Name;
 class Deklaration;
-class Feld;
-class Hex;
-class Name;
-struct Modul;
+class Modul;
 
 struct Ast
 {
@@ -24,15 +24,30 @@ struct Ast
     std::list<Modul *> module;
 };
 
-struct Modul
+// modul {{{
+class Modul
 {
-    Spanne spanne;
-    std::string name;
-    uint16_t adresse;
-    std::list<Deklaration *> deklarationen;
-    std::list<Anweisung *> anweisungen;
-};
+public:
+    Modul(Spanne spanne, std::string name, uint16_t adresse);
 
+    Spanne spanne() const;
+    std::string name() const;
+    uint16_t adresse() const;
+
+    std::list<Deklaration *> deklarationen();
+    void deklaration_hinzufügen(Deklaration *deklaration);
+
+    std::list<Anweisung *> anweisungen();
+    void anweisung_hinzufügen(Anweisung *anweisung);
+
+private:
+    Spanne _spanne;
+    std::string _name;
+    uint16_t _adresse;
+    std::list<Deklaration *> _deklarationen;
+    std::list<Anweisung *> _anweisungen;
+};
+// }}}
 // deklarationen {{{
 #define Deklaration_Art \
     X(KONSTANTE, 1, "Konstante") \
@@ -83,11 +98,12 @@ private:
 class Deklaration_Daten : public Deklaration
 {
 public:
-    Deklaration_Daten(Spanne spanne, uint16_t größe, std::string name, uint16_t anzahl, std::vector<Hex *> daten, bool exportieren);
+    Deklaration_Daten(Spanne spanne, uint16_t größe, std::string name, uint16_t anzahl,
+                      std::vector<Ausdruck_Hex *> daten, bool exportieren);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
 
-    std::vector<Hex *> daten();
+    std::vector<Ausdruck_Hex *> daten();
     uint16_t anzahl();
     uint16_t größe();
     uint32_t gesamtgröße();
@@ -97,7 +113,7 @@ public:
 private:
     uint16_t _anzahl;
     uint16_t _größe;
-    std::vector<Hex *> _daten;
+    std::vector<Ausdruck_Hex *> _daten;
 };
 
 class Deklaration_Schablone : public Deklaration
@@ -131,14 +147,15 @@ private:
 class Deklaration_Makro : public Deklaration
 {
 public:
-    Deklaration_Makro(Spanne spanne, std::string name, std::vector<Name *> parameter, std::vector<Anweisung *> rumpf);
+    Deklaration_Makro(Spanne spanne, std::string name, std::vector<Ausdruck_Name *> parameter,
+                      std::vector<Anweisung *> rumpf);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
-    std::vector<Name *> parameter();
+    std::vector<Ausdruck_Name *> parameter();
     std::vector<Anweisung *> rumpf();
 
 private:
-    std::vector<Name *> _parameter;
+    std::vector<Ausdruck_Name *> _parameter;
     std::vector<Anweisung *> _rumpf;
 };
 // }}}
@@ -187,10 +204,10 @@ private:
     Spanne _spanne;
 };
 
-class Bin : public Ausdruck
+class Ausdruck_Bin : public Ausdruck
 {
 public:
-    Bin(Spanne spanne, Token *op, Ausdruck *links, Ausdruck *rechts);
+    Ausdruck_Bin(Spanne spanne, Token *op, Ausdruck *links, Ausdruck *rechts);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     Ausdruck *kopie() override;
@@ -205,10 +222,10 @@ private:
     Ausdruck *_rechts;
 };
 
-class Name : public Ausdruck
+class Ausdruck_Name : public Ausdruck
 {
 public:
-    Name(Spanne spanne, std::string name);
+    Ausdruck_Name(Spanne spanne, std::string name);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     Ausdruck *kopie() override;
@@ -219,10 +236,10 @@ private:
     std::string _name;
 };
 
-class Auswertung : public Ausdruck
+class Ausdruck_Auswertung : public Ausdruck
 {
 public:
-    Auswertung(Spanne spanne, Ausdruck *ausdruck);
+    Ausdruck_Auswertung(Spanne spanne, Ausdruck *ausdruck);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     Ausdruck *kopie() override;
@@ -233,10 +250,10 @@ private:
     Ausdruck *_ausdruck;
 };
 
-class Reg : public Ausdruck
+class Ausdruck_Reg : public Ausdruck
 {
 public:
-    Reg(Spanne spanne, std::string name);
+    Ausdruck_Reg(Spanne spanne, std::string name);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     Ausdruck *kopie() override;
@@ -248,10 +265,10 @@ private:
     std::string _name;
 };
 
-class Adresse : public Ausdruck
+class Ausdruck_Adresse : public Ausdruck
 {
 public:
-    Adresse(Spanne spanne, Ausdruck *ausdruck);
+    Ausdruck_Adresse(Spanne spanne, Ausdruck *ausdruck);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     Ausdruck *kopie() override;
@@ -261,10 +278,10 @@ private:
     Ausdruck *_ausdruck;
 };
 
-class Hex : public Ausdruck
+class Ausdruck_Hex : public Ausdruck
 {
 public:
-    Hex(Spanne spanne, uint16_t wert);
+    Ausdruck_Hex(Spanne spanne, uint16_t wert);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     Ausdruck *kopie() override;
@@ -275,10 +292,10 @@ private:
     uint16_t _wert;
 };
 
-class Text : public Ausdruck
+class Ausdruck_Text : public Ausdruck
 {
 public:
-    Text(Spanne spanne, std::string text);
+    Ausdruck_Text(Spanne spanne, std::string text);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     Ausdruck *kopie() override;
@@ -289,10 +306,10 @@ private:
     std::string _text;
 };
 
-class Variable : public Ausdruck
+class Ausdruck_Variable : public Ausdruck
 {
 public:
-    Variable(Spanne spanne, Ausdruck *ausdruck);
+    Ausdruck_Variable(Spanne spanne, Ausdruck *ausdruck);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     Ausdruck *kopie() override;
@@ -302,10 +319,10 @@ private:
     Ausdruck *_ausdruck;
 };
 
-class Klammer : public Ausdruck
+class Ausdruck_Klammer : public Ausdruck
 {
 public:
-    Klammer(Spanne spanne, Ausdruck *ausdruck);
+    Ausdruck_Klammer(Spanne spanne, Ausdruck *ausdruck);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     Ausdruck *kopie() override;
@@ -316,26 +333,26 @@ private:
     Ausdruck *_ausdruck;
 };
 
-class Als : public Ausdruck
+class Ausdruck_Als : public Ausdruck
 {
 public:
-    Als(Spanne spanne, Ausdruck *schablone, Feld *variable);
+    Ausdruck_Als(Spanne spanne, Ausdruck *schablone, Ausdruck_Feld *variable);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     Ausdruck *kopie() override;
 
     Ausdruck * schablone();
-    Feld * variable();
+    Ausdruck_Feld * variable();
 
 private:
     Ausdruck * _schablone;
-    Feld * _variable;
+    Ausdruck_Feld * _variable;
 };
 
-class Feld : public Ausdruck
+class Ausdruck_Feld : public Ausdruck
 {
 public:
-    Feld(Spanne spanne, Ausdruck *basis, std::string feld);
+    Ausdruck_Feld(Spanne spanne, Ausdruck *basis, std::string feld);
 
     void ausgeben(uint8_t tiefe, std::ostream &ausgabe) override;
     Ausdruck *kopie() override;
